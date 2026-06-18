@@ -10,6 +10,7 @@
     "dev": "node server.js",
     "art:seed": "node art/make-seed.js",
     "art:gen": "node art/generate.js",
+    "art:manifest": "node art/build-manifest.mjs",
     "art:qc": "node art/qc-sheet.js"
   },
   "engines": {

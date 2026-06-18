@@ -1,34 +1,36 @@
-// Mass-generate the collection on your own GPU via ComfyUI (RunPod). Same traits/prompts
-// as gen-collection.mjs, but hits a ComfyUI server instead of fal -> ~30x cheaper for 10k.
+// Mass-generate the collection on your own GPU via ComfyUI (RunPod), from art/manifest.json.
+// Same look as fal (your LoRA), ~30x cheaper for 10k. Exact, resumable, reproducible.
 //
-//   COMFY_URL=https://<pod>-8188.proxy.runpod.net LORA_NAME=ngmi.safetensors \
-//   node art/runpod-batch.mjs 10000
+//   1) node art/build-manifest.mjs 10000          # pre-roll all traits
+//   2) COMFY_URL=https://<pod>-8188.proxy.runpod.net LORA_NAME=ngmi.safetensors \
+//        node art/runpod-batch.mjs 50              # TEST first 50
+//   3) ... node art/runpod-batch.mjs               # no number = whole manifest
 //
 // Resumable: re-run and it skips editions whose image already exists.
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import traits from "./traits.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SUPPLY = Number(process.argv[2]) || 10;
 const COMFY = (process.env.COMFY_URL || "http://127.0.0.1:8188").replace(/\/$/, "");
 const LORA_NAME = process.env.LORA_NAME || "ngmi.safetensors";
 const LORA_SCALE = Number(process.env.LORA_SCALE) || 1.05;
 const STEPS = Number(process.env.STEPS) || 30;
 const SIZE = Number(process.env.SIZE) || 1024;
-const trigger = JSON.parse(fs.readFileSync(path.join(__dirname, "lora.json"), "utf8")).trigger || "NGMIPEPE";
+
+const manifestPath = path.join(__dirname, "manifest.json");
+if (!fs.existsSync(manifestPath)) { console.error("No art/manifest.json - run: node art/build-manifest.mjs 10000"); process.exit(1); }
+const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+const LIMIT = process.argv[2] ? Number(process.argv[2]) : manifest.length;
+const todo = manifest.slice(0, LIMIT);
 
 const OUT = path.join(__dirname, "output", "collection");
 const IMG = path.join(OUT, "images"), META = path.join(OUT, "metadata");
 fs.mkdirSync(IMG, { recursive: true }); fs.mkdirSync(META, { recursive: true });
 
-const cats = Object.entries(traits.categories);
-const pick = (o) => { const t = o.reduce((a, x) => a + x.weight, 0); let r = Math.random() * t; for (const x of o) if ((r -= x.weight) < 0) return x; return o.at(-1); };
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-const clientId = "ngmi-" + Math.floor(Math.random() * 1e9);
+const clientId = "ngmi-" + manifest.length;
 
-// FLUX-dev + LoRA workflow in ComfyUI API format.
 function workflow(prompt, seed) {
   return {
     "10": { class_type: "VAELoader", inputs: { vae_name: "ae.safetensors" } },
@@ -47,19 +49,16 @@ function workflow(prompt, seed) {
     "9":  { class_type: "SaveImage", inputs: { images: ["8", 0], filename_prefix: "ngmi" } },
   };
 }
-
 async function queue(prompt, seed) {
   const res = await fetch(`${COMFY}/prompt`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: workflow(prompt, seed), client_id: clientId }) });
   if (!res.ok) throw new Error(`/prompt ${res.status}: ${(await res.text()).slice(0, 200)}`);
   return (await res.json()).prompt_id;
 }
-async function waitImage(id, tries = 240) {
+async function waitImage(id, tries = 300) {
   for (let i = 0; i < tries; i++) {
     const h = await (await fetch(`${COMFY}/history/${id}`)).json();
-    const entry = h[id];
-    if (entry?.outputs) {
-      for (const n of Object.values(entry.outputs)) if (n.images?.length) return n.images[0];
-    }
+    const out = h[id]?.outputs;
+    if (out) for (const n of Object.values(out)) if (n.images?.length) return n.images[0];
     await sleep(1000);
   }
   throw new Error("timed out waiting for image");
@@ -70,39 +69,25 @@ async function fetchImage(img) {
   return Buffer.from(await (await fetch(u)).arrayBuffer());
 }
 
-const seen = new Set();
-let edition = 0, attempts = 0, made = 0;
-console.log(`ComfyUI: ${COMFY}  |  LoRA: ${LORA_NAME}  |  target: ${SUPPLY}`);
+let made = 0, skipped = 0, failed = 0;
+console.log(`ComfyUI: ${COMFY} | LoRA: ${LORA_NAME} | tokens: ${todo.length}/${manifest.length}`);
 
-while (edition < SUPPLY && attempts < SUPPLY * 40) {
-  attempts++;
-  const dna = Object.fromEntries(cats.map(([c, o]) => [c, pick(o)]));
-  const key = cats.map(([c]) => dna[c].value).join("|");
-  if (seen.has(key)) continue;
-  seen.add(key);
-  edition++;
-
-  if (fs.existsSync(path.join(IMG, `${edition}.png`))) continue; // resume
-
-  const frags = cats.map(([c]) => dna[c].prompt).filter(Boolean);
-  const prompt = `${trigger}, ${traits.styleBase}, ${frags.join(", ")}`;
-  const seed = (Math.floor(Math.random() * 2 ** 31)) ^ edition;
-  const attrs = cats.map(([c]) => ({ trait_type: c, value: dna[c].value })).filter(a => !/^(none|plain|normal)$/i.test(a.value));
-
+for (const m of todo) {
+  if (fs.existsSync(path.join(IMG, `${m.edition}.png`))) { skipped++; continue; }
   try {
     const t0 = Date.now();
-    const img = await fetchImage(await waitImage(await queue(prompt, seed)));
-    fs.writeFileSync(path.join(IMG, `${edition}.png`), img);
-    fs.writeFileSync(path.join(META, `${edition}.json`), JSON.stringify({
-      name: `NGMI #${edition}`, description: "10,000 pre-rugged Pepes. You are the exit liquidity.",
-      image: `ipfs://REPLACE_CID/${edition}.png`, edition, attributes: attrs,
+    const img = await fetchImage(await waitImage(await queue(m.prompt, m.seed)));
+    fs.writeFileSync(path.join(IMG, `${m.edition}.png`), img);
+    fs.writeFileSync(path.join(META, `${m.edition}.json`), JSON.stringify({
+      name: `NGMI #${m.edition}`, description: "10,000 pre-rugged Pepes. You are the exit liquidity.",
+      image: `ipfs://REPLACE_CID/${m.edition}.png`, edition: m.edition, attributes: m.attributes,
     }, null, 2));
     made++;
-    console.log(`#${edition} (${((Date.now() - t0) / 1000).toFixed(1)}s) ${attrs.map(a => a.value).join(", ") || "bare"}`);
+    if (made % 10 === 0 || made === 1) console.log(`#${m.edition} (${((Date.now() - t0) / 1000).toFixed(1)}s) ${m.attributes.map(a => a.value).join(", ") || "bare"}  [${made} made / ${skipped} skip]`);
   } catch (e) {
-    console.log(`#${edition} FAILED: ${e.message} - retrying later`);
-    edition--; seen.delete(key);
+    failed++;
+    console.log(`#${m.edition} FAILED: ${e.message}`);
     await sleep(2000);
   }
 }
-console.log(`\nDone. Made ${made} this run -> art/output/collection/`);
+console.log(`\nDone. made=${made} skipped=${skipped} failed=${failed}. Re-run to retry failures. -> art/output/collection/`);

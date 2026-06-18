@@ -1,46 +1,72 @@
-# Generating the 10k on RunPod (ComfyUI + your LoRA)
+# Minting the full 10k on RunPod (ComfyUI + your LoRA)
 
-Same style + traits as the fal demo, but on your own GPU. ~$6-15 for 10,000 instead of $250-500.
+Your style (LoRA) + CryptoPunk-style traits, generated on your own GPU.
+~$5-15 for 10,000 vs ~$250-500 on fal.
 
-## 1. Launch a pod
-- RunPod -> Deploy -> pick a GPU: **RTX 4090** (cheapest that fits FLUX) or A40/A6000.
-- Template: a **ComfyUI + FLUX** template (search the RunPod template list for "ComfyUI Flux").
-  Using a FLUX-preloaded template saves you the large gated `flux1-dev` download.
-- Expose HTTP port **8188**. After it boots, RunPod gives you a URL like:
-  `https://<POD_ID>-8188.proxy.runpod.net`  <- this is your `COMFY_URL`.
+---
 
-## 2. Put the models in place (in the pod's `ComfyUI/models/`)
-If the template didn't already include them:
-- `unet/flux1-dev.safetensors`   (or `checkpoints/` depending on template)
-- `clip/t5xxl_fp16.safetensors`  and  `clip/clip_l.safetensors`
-- `vae/ae.safetensors`
-- `loras/ngmi.safetensors`  <- **your trained LoRA**. Download it from the URL in `art/lora.json`:
-  ```
-  cd ComfyUI/models/loras
-  wget -O ngmi.safetensors "<loraUrl from art/lora.json>"
-  ```
+## STEP 0 (on your machine) - pre-roll the collection
+This locks every token's traits up front (exact, resumable, reproducible):
+```
+node art/build-manifest.mjs 10000
+```
+-> writes `art/manifest.json` (10,000 tokens) and `art/manifest-rarity.json`.
+Open `manifest-rarity.json` and sanity-check the distribution. Re-run to reshuffle.
 
-> Tip: open the ComfyUI web UI once and generate a single image manually to confirm the
-> model/clip/vae/lora names match what's in `runpod-batch.mjs` (UNETLoader / DualCLIPLoader /
-> VAELoader / LoraLoaderModelOnly). If a filename differs, set it via env or edit the workflow.
+---
 
-## 3. Run the batch (from your local machine)
+## STEP 1 - launch a RunPod pod
+- RunPod -> Deploy -> GPU: **RTX 4090** (cheapest that fits FLUX; A40/A6000 also fine).
+- Template: search templates for **"ComfyUI Flux"** (one that PRELOADS `flux1-dev` + clips + vae
+  saves a big gated download). Deploy it.
+- Make sure HTTP port **8188** is exposed. After boot, "Connect" shows a URL like:
+  `https://<POD_ID>-8188.proxy.runpod.net`  ->  this is your **COMFY_URL**.
+
+## STEP 2 - install your LoRA on the pod
+Open the pod's **Web Terminal** and run (paste the file, or the two lines):
+```
+cd /workspace/ComfyUI/models/loras 2>/dev/null || cd /ComfyUI/models/loras
+wget -O ngmi.safetensors "https://v3b.fal.media/files/b/0a9ecf2d/LyemRON34U6lT2Jw8f-q6_pytorch_lora_weights.safetensors"
+```
+(or copy `art/pod-setup.sh` into the pod and `bash pod-setup.sh` - it also verifies the base files).
+
+> Open the ComfyUI web UI once and generate one image manually to confirm the model/clip/vae
+> names match. The batch expects: `flux1-dev.safetensors`, `t5xxl_fp16.safetensors`,
+> `clip_l.safetensors`, `ae.safetensors`, `ngmi.safetensors`. If any differ, rename on the pod
+> or set `LORA_NAME` / edit the workflow node in `runpod-batch.mjs`.
+
+## STEP 3 - TEST RUN (50 images) - do not skip
+From your machine:
 ```
 COMFY_URL=https://<POD_ID>-8188.proxy.runpod.net LORA_NAME=ngmi.safetensors \
-  node art/runpod-batch.mjs 10000
+  node art/runpod-batch.mjs 50
+npm run art:qc
 ```
-Optional env: `LORA_SCALE` (default 1.05), `STEPS` (30), `SIZE` (1024).
+Open `art/output/collection/qc/sheet-001.png`. If the look/traits are right -> continue.
+If a filename was wrong you'll see errors here (cheap to fix at 50, not 10,000).
 
-- Outputs go to `art/output/collection/images` + `metadata`.
-- **Resumable:** re-run the same command and it skips editions already saved (safe across disconnects).
-- Failures auto-retry.
+## STEP 4 - FULL RUN (10,000)
+```
+COMFY_URL=https://<POD_ID>-8188.proxy.runpod.net LORA_NAME=ngmi.safetensors \
+  node art/runpod-batch.mjs
+```
+- Resumable: if it disconnects, just run the same command again - it skips finished tokens.
+- Tip: run it in `tmux`/`screen`-style persistence or keep the terminal open. Each token ~4-6s.
+- Watch progress; it prints every 10th token.
 
-## 4. After generation
-- QC pass: eyeball the sheet, regenerate any malformed ones (delete its `N.png` + rerun).
-- Upload `images/` to IPFS (e.g. nft.storage / Pinata), get the CID.
-- Set `image` base in metadata to `ipfs://<CID>/<id>.png` (or rewrite the metadata `image` field).
-- Mint with your contract / launchpad; list on OpenSea.
+## STEP 5 - QC + fix
+```
+npm run art:qc
+```
+- Flip through `art/output/collection/qc/sheet-*.png`; check `_rarity.json`.
+- Regenerate a bad one: delete `art/output/collection/images/<id>.png` then re-run STEP 4
+  (it reproduces that edition's SAME traits with a fresh image).
 
-## Cost math
-RTX 4090 ~$0.40/hr, ~4-6s per 1024px FLUX image => ~700-900 img/hr =>
-10,000 ≈ 12-15 GPU-hours ≈ **$5-15** total. Stop the pod the moment it finishes.
+## STEP 6 - publish
+- Upload `art/output/collection/images/` to IPFS (Pinata / nft.storage) -> get a CID.
+- Rewrite each metadata `image` from `ipfs://REPLACE_CID/<id>.png` to your real CID.
+- Upload `metadata/` to IPFS -> that CID is your contract `baseURI`.
+- **Stop the pod** the moment generation finishes (billing is per-second).
+
+## Cost
+RTX 4090 ~$0.40/hr, ~4-6s/image => ~700-900/hr => 10,000 ≈ 12-15 GPU-hrs ≈ **$5-15**.
