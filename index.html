@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NGMI - 10,000 Pre-Rugged Pepes</title>
+  <meta name="description" content="NGMI: 10,000 pre-rugged Pepes. You are the exit liquidity, and we're not even hiding it. Whitelist open; a free mint might follow." />
+
+  <!-- Open Graph / share preview -->
+  <meta property="og:title" content="NGMI - 10,000 Pre-Rugged Pepes" />
+  <meta property="og:description" content="You are the exit liquidity. We told you upfront. Whitelist open, mint maybe." />
+  <meta property="og:type" content="website" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=21" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0b'/><text x='50' y='72' font-size='62' font-family='monospace' font-weight='bold' fill='%23c6f24e' text-anchor='middle'>N</text></svg>" />
+</head>
+<body>
+  <!-- Scam ticker tape -->
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker__track" id="ticker"></div>
+  </div>
+
+  <!-- Nav -->
+  <header class="nav">
+    <a class="nav__brand" href="#top">
+      <span class="nav__mark">NG</span><span class="nav__name">MI</span>
+    </a>
+    <nav class="nav__links">
+      <a href="#manifesto">Manifesto</a>
+      <a href="#receipts">Receipts</a>
+      <a href="#evidence">Evidence</a>
+      <a href="/ruglist">Ruglist</a>
+      <a href="#wl">Whitelist</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <button class="btn btn--accent js-wl" id="navWl">Join Whitelist →</button>
+  </header>
+
+  <main id="top">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero__copy">
+        <h1 class="hero__title">YOU ARE THE<br /><span class="hl">EXIT&nbsp;LIQUIDITY</span></h1>
+        <p class="hero__sub">
+          10,000 pre-rugged Pepes, dropping soon. Every other project swore "wagmi", promised a
+          roadmap, and deleted the Discord at 4am. We skipped the lying part. The
+          <strong>whitelist is open</strong> now; a free mint might follow. Might. We promised nothing.
+        </p>
+
+        <div class="hero__cta">
+          <button class="btn btn--accent btn--big js-wl" id="heroWl">Claim your whitelist spot →</button>
+          <button class="btn btn--ghost btn--big js-soon" id="mintSoon">Mint: maybe (soon?)</button>
+        </div>
+        <p class="hero__note">Whitelist is live. The mint might be free. Might. Not sure yet. Don't go expecting it for free like some internet beggar.</p>
+      </div>
+
+      <aside class="hero__art">
+        <figure class="evidence-card" id="heroPepe">
+          <span class="evidence-card__stamp">RUGGED</span>
+        </figure>
+        <div class="evidence-card__plate">
+          <span>EXHIBIT&nbsp;A</span>
+          <span class="down" id="heroLoss">floor -99%</span>
+        </div>
+      </aside>
+    </section>
+
+    <!-- Marquee -->
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee__track">
+        <span>NGMI</span><span class="o">EXIT LIQUIDITY</span><span>PRE-RUGGED</span><span class="o">NOT FINANCIAL ADVICE</span><span>NGMI</span><span class="o">EXIT LIQUIDITY</span><span>PRE-RUGGED</span><span class="o">NOT FINANCIAL ADVICE</span>
+      </div>
+    </div>
+
+    <!-- Field notes (real data, editorial) -->
+    <section class="report" id="stats">
+      <span class="report__kick">// FIELD NOTES</span>
+      <blockquote class="report__quote">
+        Over <b>1,000,000</b> NFT projects have rugged their holders. Thousands more launch every
+        week - each one a fresh exit scam dressed up as a roadmap -
+        <span class="report__punch">and exactly one told you first.</span>
+      </blockquote>
+    </section>
+
+    <!-- Whitelist / Initiation -->
+    <section class="section section--wl" id="wl">
+      <div class="wl">
+        <span class="section__kick section__kick--light">// INITIATION</span>
+        <h2 class="section__title">You don't get whitelisted for being early.</h2>
+        <p class="section__lead">You get whitelisted for being <em>broken</em>. To prove you belong
+          here you publicly burn one of the NFTs that already rugged you - live, on stream, cameras
+          rolling. Tears optional. Encouraged.</p>
+        <ol class="wl__steps">
+          <li><span>01</span> Login with X</li>
+          <li><span>02</span> Confess your losses</li>
+          <li><span>03</span> Burn a rugged bag, live</li>
+          <li><span>04</span> Become exit liquidity</li>
+        </ol>
+        <button class="btn btn--accent btn--big" id="wlBtn">Begin Initiation</button>
+        <p class="wl__fine">By applying you acknowledge that you have, in fact, learned nothing.</p>
+      </div>
+    </section>
+
+    <!-- Manifesto -->
+    <section class="section" id="manifesto">
+      <div class="section__head">
+        <span class="section__kick">// THE WHITEPAPER</span>
+        <h2 class="section__title">Four things, then mint</h2>
+      </div>
+      <ol class="manifesto">
+        <li>
+          <span class="manifesto__n">01</span>
+          <div>
+            <h3>No utility. We mean it.</h3>
+            <p>No staking, no game, no "ecosystem", no token. The contract has no hidden mint, no
+              metadata swap, no transfer block, because there's nothing to drain. It's a frog that
+              looks how your portfolio feels. That's the utility.</p>
+          </div>
+        </li>
+        <li>
+          <span class="manifesto__n">02</span>
+          <div>
+            <h3>The floor is a vibe, not a price.</h3>
+            <p>It's going to zero, possibly before you finish this sentence. There's no roadmap to
+              abandon and no team allocation to dump, because we promised neither. The floor only
+              knows one direction and it's the one that makes you skip meals.</p>
+          </div>
+        </li>
+        <li>
+          <span class="manifesto__n">03</span>
+          <div>
+            <h3>Anon. Obviously.</h3>
+            <p>You watched what happened to the doxxed devs. So did we. We learned from the best -
+              and by "the best" we mean whoever honeypotted your bag last Tuesday.</p>
+          </div>
+        </li>
+        <li>
+          <span class="manifesto__n">04</span>
+          <div>
+            <h3>You're going to mint anyway.</h3>
+            <p>You read a manifesto that openly mocks you and your cursor is already drifting toward
+              the button. NGMI, and we respect it. Welcome home.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <!-- Receipts: leaked Discord proof of the pre-rug -->
+    <section class="section" id="receipts">
+      <div class="section__head">
+        <span class="section__kick">// THE RECEIPTS</span>
+        <h2 class="section__title">Public proof of pre-rug</h2>
+        <p class="section__lead">Other projects hide the plan. Here's ours, straight from the team
+          server. We're not hiding a thing - this is the rug, documented, before it even happens.</p>
+      </div>
+
+      <div class="proofgrid">
+        <div class="dchat">
+          <div class="dchat__head"># rug-strategy</div>
+          <div class="dchat__body">
+            <div class="dmsg"><span class="dmsg__av" style="background:#f23f43">FF</span><div class="dmsg__c"><div class="dmsg__h"><b style="color:#f23f43">frogfather</b><time>03:41</time></div><p>the plan: free mint, make them burn their old rugged bags for the WL, then we ghost</p></div></div>
+            <div class="dmsg"><span class="dmsg__av" style="background:#5865f2">EL</span><div class="dmsg__c"><div class="dmsg__h"><b style="color:#5865f2">exitliq</b><time>03:41</time></div><p>do we actually ship the art</p></div></div>
+            <div class="dmsg"><span class="dmsg__av" style="background:#f23f43">FF</span><div class="dmsg__c"><div class="dmsg__h"><b style="color:#f23f43">frogfather</b><time>03:42</time></div><p>lol no. metadata 404s. we just say "reveal soon" forever</p></div></div>
+            <div class="dmsg"><span class="dmsg__av" style="background:#23a55a">JM</span><div class="dmsg__c"><div class="dmsg__h"><b style="color:#23a55a">jeetmaster</b><time>03:43</time></div><p>based. when do we pull the floor</p></div></div>
+            <div class="dmsg"><span class="dmsg__av" style="background:#f23f43">FF</span><div class="dmsg__c"><div class="dmsg__h"><b style="color:#f23f43">frogfather</b><time>03:43</time></div><p>the second it touches 0.1 eth. textbook</p></div></div>
+          </div>
+        </div>
+
+        <div class="dchat">
+          <div class="dchat__head"># treasury</div>
+          <div class="dchat__body">
+            <div class="dmsg"><span class="dmsg__av" style="background:#23a55a">JM</span><div class="dmsg__c"><div class="dmsg__h"><b style="color:#23a55a">jeetmaster</b><time>04:02</time></div><p>how much did the WL burns net us</p></div></div>
+            <div class="dmsg"><span class="dmsg__av" style="background:#f23f43">FF</span><div class="dmsg__c"><div class="dmsg__h"><b style="color:#f23f43">frogfather</b><time>04:02</time></div><p>zero. they sent the NFTs to 0xdead themselves lmao. we just farm the clout</p></div></div>
+            <div class="dmsg"><span class="dmsg__av" style="background:#5865f2">EL</span><div class="dmsg__c"><div class="dmsg__h"><b style="color:#5865f2">exitliq</b><time>04:03</time></div><p>honestly the real rug is the holders we made along the way</p></div></div>
+            <div class="dmsg"><span class="dmsg__av" style="background:#f23f43">FF</span><div class="dmsg__c"><div class="dmsg__h"><b style="color:#f23f43">frogfather</b><time>04:03</time></div><p>put that on the tombstone</p></div></div>
+          </div>
+        </div>
+
+        <div class="dchat">
+          <div class="dchat__head"># mint-plan</div>
+          <div class="dchat__body">
+            <div class="dmsg"><span class="dmsg__av" style="background:#f23f43">FF</span><div class="dmsg__c"><div class="dmsg__h"><b style="color:#f23f43">frogfather</b><time>03:58</time></div><p>launch copy says FREE MINT. big lime letters. that's just to farm the hype</p></div></div>
+            <div class="dmsg"><span class="dmsg__av" style="background:#23a55a">JM</span><div class="dmsg__c"><div class="dmsg__h"><b style="color:#23a55a">jeetmaster</b><time>03:59</time></div><p>but it's not actually free?</p></div></div>
+            <div class="dmsg"><span class="dmsg__av" style="background:#f23f43">FF</span><div class="dmsg__c"><div class="dmsg__h"><b style="color:#f23f43">frogfather</b><time>03:59</time></div><p>nope. we ride the free-mint hype, then right before mint goes live we announce it's $69. classic switch</p></div></div>
+            <div class="dmsg"><span class="dmsg__av" style="background:#5865f2">EL</span><div class="dmsg__c"><div class="dmsg__h"><b style="color:#5865f2">exitliq</b><time>04:00</time></div><p>and when they screenshot the "free" promise?</p></div></div>
+            <div class="dmsg"><span class="dmsg__av" style="background:#f23f43">FF</span><div class="dmsg__c"><div class="dmsg__h"><b style="color:#f23f43">frogfather</b><time>04:00</time></div><p>"free mint was phase 1, ser." they'll still pay the $69</p></div></div>
+          </div>
+        </div>
+      </div>
+      <p class="proof__fine">Dramatized reconstruction. It's a parody. But this is exactly how it goes, every time.</p>
+    </section>
+
+    <!-- Evidence / single feature art -->
+    <section class="section section--evidence" id="evidence">
+      <div class="section__head">
+        <span class="section__kick">// THE COLLECTION · PREVIEW</span>
+        <h2 class="section__title">10,000 incoming. None minted yet.</h2>
+        <p class="section__lead">Mint isn't live. This is a preview of what you'll be holding: each
+          Pepe is procedurally generated from a unique seed and a unique way of getting ruined.
+          The full 10,000 drop on OpenSea once the whitelist closes.</p>
+      </div>
+      <div class="exhibit">
+        <figure class="exhibit__art" id="featPepe"></figure>
+        <div class="exhibit__file">
+          <div class="exhibit__tag">PREVIEW · NOT MINTED</div>
+          <h3 id="featName">Preview #0420</h3>
+          <dl class="filerow"><dt>Planned cause of death</dt><dd id="featCause">roadmap abandoned at ATH</dd></dl>
+          <dl class="filerow"><dt>Swept high</dt><dd id="featMint">0.69 ETH</dd></dl>
+          <dl class="filerow"><dt>Floor now</dt><dd class="down" id="featFloor">0.0009 ETH (-99.9%)</dd></dl>
+          <dl class="filerow"><dt>Status at mint</dt><dd id="featStatus">already coping</dd></dl>
+          <dl class="filerow"><dt>Mint</dt><dd>not live (soon)</dd></dl>
+          <button class="btn btn--ghost" id="featNext">Preview another →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Roadmap -->
+    <section class="section" id="roadmap">
+      <div class="section__head">
+        <span class="section__kick">// THE PLAN</span>
+        <h2 class="section__title">Roadmap</h2>
+      </div>
+      <div class="road">
+        <div class="road__item done">
+          <span class="road__phase">P1</span>
+          <div><h3>You buy</h3><p>You ape in because a frog with a knife in its back spoke to you on a spiritual level.</p></div>
+        </div>
+        <div class="road__item done">
+          <span class="road__phase">P2</span>
+          <div><h3>Number goes up (briefly)</h3><p>For roughly 40 minutes you are a genius. You tell the group chat. You screenshot it.</p></div>
+        </div>
+        <div class="road__item active">
+          <span class="road__phase">P3</span>
+          <div><h3>We sell</h3><p>We're doing this part right now. Look at the chart. Yeah. That was us. Thanks ser.</p></div>
+        </div>
+        <div class="road__item">
+          <span class="road__phase">P4</span>
+          <div><h3>You hold (cope)</h3><p>"The roadmap is still coming." "The art is still good." "Devs will come back." They won't.</p></div>
+        </div>
+        <div class="road__item">
+          <span class="road__phase">P5</span>
+          <div><h3>You mint the next one</h3><p>Round and round we go. Same frog, different rope. See you at our next project.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq">
+      <div class="section__head">
+        <span class="section__kick">// COPE CORNER</span>
+        <h2 class="section__title">FAQ</h2>
+      </div>
+      <div class="faq" id="faqList"></div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta">
+      <h2>The whitelist is open.<br />The mint is a maybe.</h2>
+      <p>Grab your spot anyway. If a mint happens, you'll want it. If it doesn't, you were warned.</p>
+      <button id="ctaWl" class="btn btn--primary btn--big js-wl">Begin Initiation →</button>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__top">
+      <div class="footer__brand"><span class="nav__mark">NG</span>MI</div>
+      <div class="footer__links">
+        <a href="#manifesto">Manifesto</a>
+        <a href="#wl">Whitelist</a>
+        <a href="#faq">FAQ</a>
+        <a href="#top">Mint</a>
+      </div>
+    </div>
+    <p class="footer__disclaimer">
+      <strong>This is satire</strong> - a parody art project that mocks rug-pull culture by being
+      honest about it. No token, no roadmap, no utility, no promises. Nothing here is investment
+      advice; it is the opposite. We're anonymous frogs telling you to your face that you're the
+      exit liquidity, and that we're going to rug you like all the others. Ape at your own risk.
+      You were warned.
+    </p>
+    <p class="footer__copy">© 2026 NGMI - all rights reserved, your funds are not.</p>
+  </footer>
+
+  <!-- Whitelist modal -->
+  <div class="modal" id="wlModal" aria-hidden="true">
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="wlModalTitle">
+      <button class="modal__x" data-close aria-label="Close">×</button>
+      <div class="modal__body" id="wlModalBody"><!-- injected by app.js --></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" aria-live="polite"></div>
+
+  <script src="app.js?v=21"></script>
+</body>
+</html>

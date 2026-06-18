@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NGMI - Admin</title>
+  <meta name="robots" content="noindex" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=21" />
+  <style>
+    .admin { max-width: 1200px; margin: 0 auto; padding: 28px clamp(16px,4vw,40px) 80px; }
+    .admin h1 { font-family: var(--poster); font-weight: 400; font-size: 40px; margin: 0 0 6px; }
+    .admin__bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 16px 0 24px; }
+    .admin__bar input { flex: 1; min-width: 220px; font-family: var(--mono); font-size: 14px; border: 2px solid var(--ink); border-radius: 2px; padding: 11px 13px; }
+    .admin__msg { font-family: var(--mono); font-size: 13px; color: var(--ink-soft); margin: 8px 0; }
+    .tbl { width: 100%; border-collapse: collapse; border: 2px solid var(--ink); font-size: 13px; background: var(--paper-2); }
+    .tbl th, .tbl td { border: 1px solid var(--ink); padding: 8px 10px; text-align: left; vertical-align: top; }
+    .tbl th { font-family: var(--mono); text-transform: uppercase; font-size: 11px; letter-spacing: .03em; background: var(--paper-3); }
+    .tbl td.mono, .tbl th.mono { font-family: var(--mono); }
+    .pill { font-family: var(--mono); font-weight: 700; font-size: 11px; padding: 2px 7px; border: 1px solid var(--ink); border-radius: 2px; white-space: nowrap; }
+    .pill.approved { background: var(--acid); color: var(--acid-ink); }
+    .pill.pending  { background: #ffe9a8; }
+    .pill.rejected { background: var(--rug); color: #fff; }
+    .row.pending { background: #fffdf3; }
+    .tbl .act { display: flex; gap: 6px; }
+    .tbl .act button { font-family: var(--font); font-weight: 800; font-size: 11px; text-transform: uppercase; border: 2px solid var(--ink); border-radius: 2px; padding: 5px 8px; cursor: pointer; }
+    .tbl .ok { background: var(--acid); color: var(--acid-ink); }
+    .tbl .no { background: #fff; }
+    .stat-row { display: flex; gap: 20px; font-family: var(--mono); font-size: 13px; margin-bottom: 14px; flex-wrap: wrap; }
+    .stat-row b { font-family: var(--poster); font-size: 22px; }
+  </style>
+</head>
+<body>
+  <div class="ticker" aria-hidden="true"><div class="ticker__track" style="padding:9px 20px;font-family:var(--mono);font-size:13px">NGMI ADMIN · approve pending degens · rug them again · NGMI ADMIN</div></div>
+  <main class="admin">
+    <h1>NGMI - Admin</h1>
+    <p class="admin__msg">Review every application by hand - <b>nothing is auto-approved</b>. Check the score and the <b>shame tweet</b> (fake/missing = reject), then approve or reject.</p>
+
+    <div class="admin__bar">
+      <input id="token" type="password" placeholder="Admin token (from .env ADMIN_TOKEN)" />
+      <button class="btn btn--primary" id="save">Load</button>
+      <button class="btn btn--ghost" id="refresh">↻ Refresh</button>
+    </div>
+
+    <div class="stat-row" id="stats"></div>
+    <div class="admin__msg" id="msg"></div>
+    <div id="tableWrap"></div>
+  </main>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+    let token = localStorage.getItem("ngmi_admin") || "";
+    $("#token").value = token;
+
+    const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+    const fmtDate = (ts) => { if (!ts) return "-"; const d = new Date(Number(ts) * 1000); return isNaN(d) ? "-" : d.toISOString().slice(0, 16).replace("T", " "); };
+
+    async function load() {
+      if (!token) { $("#msg").textContent = "Enter your admin token and click Load."; return; }
+      $("#msg").textContent = "Loading…";
+      try {
+        const r = await fetch("/api/admin/list?token=" + encodeURIComponent(token));
+        if (r.status === 401) { $("#msg").textContent = "Bad or missing admin token (check ADMIN_TOKEN in .env)."; render([]); return; }
+        const d = await r.json();
+        render(d.rows || []);
+        $("#msg").textContent = "";
+      } catch (e) { $("#msg").textContent = "Error: " + e.message; }
+    }
+
+    async function decide(spot, decision) {
+      await fetch("/api/admin/decide", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-token": token },
+        body: JSON.stringify({ spot, decision }),
+      });
+      load();
+    }
+
+    function render(rows) {
+      const pending = rows.filter(r => r.status === "pending").length;
+      const approved = rows.filter(r => r.status === "approved").length;
+      $("#stats").innerHTML =
+        `<div><b>${rows.length}</b> total</div><div><b>${pending}</b> pending</div><div><b>${approved}</b> approved</div>`;
+
+      if (!rows.length) { $("#tableWrap").innerHTML = "<p class='admin__msg'>No applications yet.</p>"; return; }
+
+      const body = rows.map(r => {
+        const burns = Array.isArray(r.burns) ? r.burns : [];
+        const projects = burns.map(b => esc(b.projectName || "-") + " #" + esc(String(b.tokenId || "").slice(0, 8))).join("<br>") || "-";
+        const st = r.status || "pending";
+        return `<tr class="row ${st}">
+          <td class="mono">#${String(r.spot).padStart(3, "0")}</td>
+          <td><b>${esc(r.handle)}</b><br><span class="admin__msg" style="margin:0">${esc(r.name || "")}</span></td>
+          <td class="mono">$${esc((r.lost_usd || "").replace(/[^0-9.,]/g, "") || "-")}</td>
+          <td class="mono">${esc(r.nft_ath || "-")}</td>
+          <td class="mono" style="text-align:center">${r.burn_count || 0}</td>
+          <td class="mono" style="font-size:11px">${projects}</td>
+          <td class="mono" style="text-align:center"><b>${r.approval || 0}%</b></td>
+          <td class="mono">${r.shame_tweet ? `<a href="${esc(r.shame_tweet)}" target="_blank" rel="noopener" style="color:var(--rug)">tweet</a>` : "<span style='color:var(--rug)'>none</span>"}</td>
+          <td><span class="pill ${st}">${st.toUpperCase()}</span></td>
+          <td class="mono" style="font-size:11px">${fmtDate(r.ts)}</td>
+          <td><div class="act">
+            ${st !== "approved" ? `<button class="ok" onclick="decide(${r.spot},'approve')">Approve</button>` : ""}
+            ${st !== "rejected" ? `<button class="no" onclick="decide(${r.spot},'reject')">Reject</button>` : ""}
+          </div></td>
+        </tr>`;
+      }).join("");
+
+      $("#tableWrap").innerHTML = `<table class="tbl">
+        <thead><tr>
+          <th class="mono">Spot</th><th>Degen</th><th class="mono">Rugged</th><th class="mono">ATH</th>
+          <th class="mono">Bags</th><th>Burned</th><th class="mono">Score</th><th>Shame</th><th>Status</th><th class="mono">When</th><th>Action</th>
+        </tr></thead>
+        <tbody>${body}</tbody></table>`;
+    }
+
+    window.decide = decide;
+    $("#save").onclick = () => { token = $("#token").value.trim(); localStorage.setItem("ngmi_admin", token); load(); };
+    $("#refresh").onclick = load;
+    if (token) load();
+  </script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Initiation - NGMI</title>
+  <meta name="robots" content="noindex" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=21" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0b'/><text x='50' y='72' font-size='62' font-family='monospace' font-weight='bold' fill='%23c6f24e' text-anchor='middle'>N</text></svg>" />
+</head>
+<body data-page="apply">
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker__track" id="ticker"></div>
+  </div>
+
+  <header class="nav">
+    <a class="nav__brand" href="/"><span class="nav__mark">NG</span><span class="nav__name">MI</span></a>
+    <nav class="nav__links">
+      <a href="/#manifesto">Manifesto</a>
+      <a href="/#receipts">Receipts</a>
+      <a href="/#evidence">Evidence</a>
+      <a href="/ruglist">Ruglist</a>
+      <a href="/#faq">FAQ</a>
+    </nav>
+    <div class="nav__right">
+      <span class="nav__user" id="navUser"></span>
+      <a class="nav__back" href="/">Back to site</a>
+    </div>
+  </header>
+
+  <main class="apply">
+    <div class="apply__rail">
+      <span class="apply__rail-step is-on" data-s="1">01 - Login</span>
+      <span class="apply__rail-step" data-s="2">02 - Confess</span>
+      <span class="apply__rail-step" data-s="3">03 - Burn</span>
+      <span class="apply__rail-step" data-s="4">04 - Whitelisted</span>
+    </div>
+    <div class="apply__stage" id="applyStage"></div>
+  </main>
+
+  <div class="toast" id="toast" aria-live="polite"></div>
+
+  <script src="app.js?v=21"></script>
+</body>
+</html>

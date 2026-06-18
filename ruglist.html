@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NGMI - The Ruglist</title>
+  <meta name="description" content="Every NFT burned to join NGMI. A public wall of the rugged, by the rugged." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=21" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0b'/><text x='50' y='72' font-size='62' font-family='monospace' font-weight='bold' fill='%23c6f24e' text-anchor='middle'>N</text></svg>" />
+  <style>
+    .rug { max-width: 1100px; margin: 0 auto; padding: 28px clamp(16px,4vw,40px) 90px; }
+    .rug__head { margin: 6px 0 22px; }
+    .rug__head h1 { font-family: var(--poster); font-weight: 400; font-size: clamp(40px,8vw,72px); line-height: .9; margin: 0; text-transform: uppercase; }
+    .rug__head p { color: var(--ink-soft); max-width: 640px; margin: 12px 0 0; }
+    .rug__count { font-family: var(--mono); font-weight: 700; font-size: 14px; margin: 16px 0; }
+    .rug__count b { font-family: var(--poster); font-size: 30px; color: var(--rug); vertical-align: -3px; margin-right: 6px; }
+    .rug__list { border-top: 2px solid var(--ink); }
+    .rug__row { display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; padding: 16px 2px; border-bottom: 2px solid var(--ink); align-items: center; }
+    .rug__main { min-width: 0; }
+    .rug__coll { font-family: var(--font); font-weight: 900; font-size: clamp(17px,2.6vw,22px); }
+    .rug__coll .tok { color: var(--ink-soft); font-weight: 700; }
+    .rug__by { font-family: var(--mono); font-size: 13px; color: var(--ink-soft); margin-top: 3px; }
+    .rug__by a { color: var(--ink); border-bottom: 2px solid var(--acid); }
+    .rug__right { text-align: right; font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+    .rug__right a { color: var(--rug); text-decoration: underline; }
+    .rug__stamp { display: inline-block; font-family: var(--mono); font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: .04em; background: var(--ink); color: var(--paper); padding: 2px 7px; border-radius: 2px; }
+    .rug__empty { font-family: var(--mono); color: var(--ink-soft); padding: 40px 0; text-align: center; }
+    .rug__bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+  </style>
+</head>
+<body>
+  <div class="ticker" aria-hidden="true"><div class="ticker__track" style="padding:9px 20px;font-family:var(--mono);font-size:13px">THE RUGLIST · burned, by the rugged · gone forever · THE RUGLIST · burned, by the rugged · gone forever ·</div></div>
+
+  <header class="nav">
+    <a class="nav__brand" href="/"><span class="nav__mark">NG</span><span class="nav__name">MI</span></a>
+    <nav class="nav__links">
+      <a href="/#manifesto">Manifesto</a>
+      <a href="/#receipts">Receipts</a>
+      <a href="/#evidence">Evidence</a>
+      <a href="/ruglist">Ruglist</a>
+      <a href="/#wl">Whitelist</a>
+      <a href="/#faq">FAQ</a>
+    </nav>
+    <div class="nav__right">
+      <span class="nav__user" id="navUser"></span>
+      <a class="nav__back" href="/">Back to site</a>
+    </div>
+  </header>
+
+  <main class="rug">
+    <div class="rug__head">
+      <h1>The Ruglist</h1>
+      <p>Every NFT publicly burned to get into NGMI. The collections that rugged these people, and
+        the people who set them on fire anyway. Sent to the dead address, on-chain, forever.</p>
+    </div>
+    <div class="rug__bar">
+      <a class="btn btn--accent" href="/apply">Add yours - burn a bag</a>
+      <button class="btn btn--ghost" id="refresh">Refresh</button>
+    </div>
+    <div class="rug__count" id="count"></div>
+    <div class="rug__list" id="list"><div class="rug__empty">Loading the wall of shame...</div></div>
+  </main>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const EXPLORERS = { "0x1":"https://etherscan.io", "0x89":"https://polygonscan.com", "0x2105":"https://basescan.org", "0xa":"https://optimistic.etherscan.io", "0xa4b1":"https://arbiscan.io", "0xaa36a7":"https://sepolia.etherscan.io", "0x14a34":"https://sepolia.basescan.org", "0x66eee":"https://sepolia.arbiscan.io", "0xaa37dc":"https://sepolia-optimism.etherscan.io", "0x13882":"https://amoy.polygonscan.com" };
+    const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+    const txUrl = (tx, chain) => (EXPLORERS[chain] || "https://etherscan.io") + "/tx/" + tx;
+    const shortId = (id) => { id = String(id || ""); return id.length > 12 ? id.slice(0, 12) + "..." : id; };
+
+    async function load() {
+      try {
+        const r = await fetch("/api/ruglist");
+        const d = await r.json();
+        render(d.rows || [], d.count || 0);
+      } catch (e) { $("#list").innerHTML = `<div class="rug__empty">Could not load the ruglist. ${esc(e.message)}</div>`; }
+    }
+
+    function render(rows, count) {
+      $("#count").innerHTML = `<b>${count}</b> bag${count === 1 ? "" : "s"} incinerated and counting`;
+      if (!rows.length) { $("#list").innerHTML = `<div class="rug__empty">Nobody has burned anything yet. Be the first to torch your trauma.</div>`; return; }
+      $("#list").innerHTML = rows.map(r => {
+        const coll = esc(r.collection || "Unknown collection");
+        const handle = esc(r.handle || "anon");
+        const xUser = handle.replace(/^@/, "");
+        const tokenCell = r.tx
+          ? `<a href="${txUrl(esc(r.tx), esc(r.chain_id))}" target="_blank" rel="noopener">burn tx</a>`
+          : `<span class="rug__stamp">demo</span>`;
+        return `<div class="rug__row">
+          <div class="rug__main">
+            <div class="rug__coll">${coll} <span class="tok">#${esc(shortId(r.token_id))}</span></div>
+            <div class="rug__by">burned by <a href="https://x.com/${xUser}" target="_blank" rel="noopener">${handle}</a></div>
+          </div>
+          <div class="rug__right">${tokenCell}</div>
+        </div>`;
+      }).join("");
+    }
+
+    async function showUser() {
+      const el = $("#navUser"); if (!el) return;
+      try {
+        const r = await fetch("/auth/me", { headers: { Accept: "application/json" } });
+        if (!r.ok) return;
+        const u = (await r.json()).user;
+        if (u) el.innerHTML = `<a href="https://x.com/${encodeURIComponent(u.username)}" target="_blank" rel="noopener">@${esc(u.username)}</a>`;
+      } catch {}
+    }
+
+    $("#refresh").onclick = load;
+    load();
+    showUser();
+  </script>
+</body>
+</html>
