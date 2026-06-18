@@ -7,7 +7,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "art:seed": "node art/make-seed.js",
+    "art:gen": "node art/generate.js"
   },
   "engines": {
     "node": ">=18"
