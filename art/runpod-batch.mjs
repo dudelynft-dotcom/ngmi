@@ -17,6 +17,10 @@ const LORA_NAME = process.env.LORA_NAME || "ngmi.safetensors";
 const LORA_SCALE = Number(process.env.LORA_SCALE) || 1.05;
 const STEPS = Number(process.env.STEPS) || 30;
 const SIZE = Number(process.env.SIZE) || 1024;
+// Model mode: default = single-file fp8 checkpoint (non-gated, easy). Set SEPARATE_FILES=1
+// to instead use unet + dual-clip + vae (e.g. a template that ships flux1-dev.safetensors).
+const CKPT_NAME = process.env.CKPT_NAME || "flux1-dev-fp8.safetensors";
+const SEPARATE = !!process.env.SEPARATE_FILES;
 
 const manifestPath = path.join(__dirname, "manifest.json");
 if (!fs.existsSync(manifestPath)) { console.error("No art/manifest.json - run: node art/build-manifest.mjs 10000"); process.exit(1); }
@@ -32,12 +36,10 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const clientId = "ngmi-" + manifest.length;
 
 function workflow(prompt, seed) {
-  return {
-    "10": { class_type: "VAELoader", inputs: { vae_name: "ae.safetensors" } },
-    "11": { class_type: "DualCLIPLoader", inputs: { clip_name1: "t5xxl_fp16.safetensors", clip_name2: "clip_l.safetensors", type: "flux" } },
-    "12": { class_type: "UNETLoader", inputs: { unet_name: "flux1-dev.safetensors", weight_dtype: "default" } },
-    "30": { class_type: "LoraLoaderModelOnly", inputs: { model: ["12", 0], lora_name: LORA_NAME, strength_model: LORA_SCALE } },
-    "6":  { class_type: "CLIPTextEncode", inputs: { text: prompt, clip: ["11", 0] } },
+  // sampler/guider/output chain shared by both model modes
+  const tail = (modelRef, clipRef, vaeRef) => ({
+    "30": { class_type: "LoraLoaderModelOnly", inputs: { model: modelRef, lora_name: LORA_NAME, strength_model: LORA_SCALE } },
+    "6":  { class_type: "CLIPTextEncode", inputs: { text: prompt, clip: clipRef } },
     "26": { class_type: "FluxGuidance", inputs: { conditioning: ["6", 0], guidance: 3.5 } },
     "5":  { class_type: "EmptySD3LatentImage", inputs: { width: SIZE, height: SIZE, batch_size: 1 } },
     "16": { class_type: "KSamplerSelect", inputs: { sampler_name: "euler" } },
@@ -45,8 +47,21 @@ function workflow(prompt, seed) {
     "22": { class_type: "BasicGuider", inputs: { model: ["30", 0], conditioning: ["26", 0] } },
     "25": { class_type: "RandomNoise", inputs: { noise_seed: seed } },
     "13": { class_type: "SamplerCustomAdvanced", inputs: { noise: ["25", 0], guider: ["22", 0], sampler: ["16", 0], sigmas: ["17", 0], latent_image: ["5", 0] } },
-    "8":  { class_type: "VAEDecode", inputs: { samples: ["13", 0], vae: ["10", 0] } },
+    "8":  { class_type: "VAEDecode", inputs: { samples: ["13", 0], vae: vaeRef } },
     "9":  { class_type: "SaveImage", inputs: { images: ["8", 0], filename_prefix: "ngmi" } },
+  });
+  if (SEPARATE) {
+    return {
+      "10": { class_type: "VAELoader", inputs: { vae_name: "ae.safetensors" } },
+      "11": { class_type: "DualCLIPLoader", inputs: { clip_name1: "t5xxl_fp16.safetensors", clip_name2: "clip_l.safetensors", type: "flux" } },
+      "12": { class_type: "UNETLoader", inputs: { unet_name: "flux1-dev.safetensors", weight_dtype: "default" } },
+      ...tail(["12", 0], ["11", 0], ["10", 0]),
+    };
+  }
+  // default: single-file fp8 checkpoint (MODEL/CLIP/VAE from one loader)
+  return {
+    "4": { class_type: "CheckpointLoaderSimple", inputs: { ckpt_name: CKPT_NAME } },
+    ...tail(["4", 0], ["4", 1], ["4", 2]),
   };
 }
 async function queue(prompt, seed) {
