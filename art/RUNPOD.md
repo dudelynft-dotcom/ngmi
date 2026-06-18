@@ -36,12 +36,20 @@ wget -O ngmi.safetensors "https://v3b.fal.media/files/b/0a9ecf2d/LyemRON34U6lT2J
 > or set `LORA_NAME` / edit the workflow node in `runpod-batch.mjs`.
 
 ## STEP 3 - TEST RUN (50 images) - do not skip
-From your machine:
+From your machine (Linux/macOS bash):
 ```
 COMFY_URL=https://<POD_ID>-8188.proxy.runpod.net LORA_NAME=ngmi.safetensors \
   node art/runpod-batch.mjs 50
 npm run art:qc
 ```
+**Windows PowerShell** (what you're on):
+```
+$env:COMFY_URL="https://<POD_ID>-8188.proxy.runpod.net"
+$env:LORA_NAME="ngmi.safetensors"
+node art/runpod-batch.mjs 50
+npm run art:qc
+```
+(env vars persist in that PowerShell window, so STEP 4 is just `node art/runpod-batch.mjs`.)
 Open `art/output/collection/qc/sheet-001.png`. If the look/traits are right -> continue.
 If a filename was wrong you'll see errors here (cheap to fix at 50, not 10,000).
 
