@@ -11,7 +11,7 @@ const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
 const express = require("express");
-const session = require("express-session");
+const cookieSession = require("cookie-session"); // serverless-safe (no memory store)
 
 const {
   X_CLIENT_ID,
@@ -37,7 +37,9 @@ const ME_URL = "https://api.twitter.com/2/users/me?user.fields=profile_image_url
 
 const DATA_DIR = path.join(__dirname, "data");
 const WL_FILE = path.join(DATA_DIR, "whitelist.json");
-fs.mkdirSync(DATA_DIR, { recursive: true });
+// On serverless (Vercel) the filesystem is read-only - the JSON fallback just won't be used there
+// (Neon is reachable from Vercel), so don't crash if we can't create the dir.
+try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch {}
 
 /* ----------------------------- helpers ----------------------------- */
 const b64url = (buf) =>
@@ -142,17 +144,13 @@ const app = express();
 app.set("trust proxy", 1);
 app.use(express.json({ limit: "32kb" }));
 app.use(
-  session({
+  cookieSession({
     name: "ngmi.sid",
-    secret: SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      sameSite: "lax", // allows the cookie to survive the top-level redirect back from X
-      secure: COOKIE_SECURE === "true",
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-    },
+    keys: [SESSION_SECRET],
+    httpOnly: true,
+    sameSite: "lax", // allows the cookie to survive the top-level redirect back from X
+    secure: COOKIE_SECURE === "true",
+    maxAge: 1000 * 60 * 60 * 24 * 7,
   })
 );
 
@@ -173,8 +171,7 @@ app.get("/auth/x/login", (req, res) => {
   url.searchParams.set("code_challenge", challenge);
   url.searchParams.set("code_challenge_method", "S256");
 
-  // persist session before the external redirect
-  req.session.save(() => res.redirect(url.toString()));
+  res.redirect(url.toString());
 });
 
 /* --- 2. Handle the callback from X ------------------------------ */
@@ -229,7 +226,7 @@ app.get("/auth/x/callback", async (req, res) => {
       name: me.name,
       avatar: me.profile_image_url || null,
     };
-    req.session.save(() => res.redirect("/apply#wl"));
+    res.redirect("/apply#wl");
   } catch (e) {
     console.error("OAuth callback error:", e);
     res.redirect("/apply?x=error#wl");
@@ -242,7 +239,8 @@ app.get("/auth/me", (req, res) => {
 });
 
 app.post("/auth/logout", (req, res) => {
-  req.session.destroy(() => res.json({ ok: true }));
+  req.session = null;
+  res.json({ ok: true });
 });
 
 /* --- 3a. The logged-in user's own application (if any) --------- */
@@ -470,10 +468,16 @@ app.use(
   })
 );
 
-app.listen(PORT, async () => {
-  console.log(`\n🐸 NGMI running → http://localhost:${PORT}`);
-  console.log(`   X OAuth: ${X_CONFIGURED ? "configured ✅" : "NOT configured ⚠"}`);
-  console.log(`   Callback: ${X_CALLBACK_URL}`);
-  try { await initDb(); } catch (e) { neonFailed(e); }
-  console.log("");
-});
+// Ensure the table exists (idempotent). Runs on local boot and on each serverless cold start.
+initDb().catch((e) => neonFailed(e));
+
+// Local dev: run a real server. On Vercel, @vercel/node imports the exported app instead.
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`\n🐸 NGMI running → http://localhost:${PORT}`);
+    console.log(`   X OAuth: ${X_CONFIGURED ? "configured ✅" : "NOT configured ⚠"}`);
+    console.log(`   Callback: ${X_CALLBACK_URL}\n`);
+  });
+}
+
+module.exports = app;
