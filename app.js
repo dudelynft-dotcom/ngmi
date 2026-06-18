@@ -153,23 +153,6 @@ const ethShort = (n) => {
 };
 
 /* ----------------------------- TICKER ----------------------------- */
-function initTicker() {
-  const items = [
-    `$NGMI <span class="down">-99.2%</span>`,
-    `FLOOR: 0.000 ETH`,
-    `7,487 rugs documented in the wild`,
-    `DISCORD: <span class="down">DELETED</span>`,
-    `253 rugs famous enough to have a name`,
-    `next rug in: 00:04:13`,
-    `wagmi <span class="down">(we aren't)</span>`,
-    `7,821 projects flagged in 5 months`,
-    `gm to bag holders only`,
-    `"it's still early" - you, lying`,
-  ];
-  const html = items.map(i => `<span>${i}</span>`).join("") .repeat(2);
-  $("#ticker").innerHTML = html;
-}
-
 /* ----------------------------- MINT (off-site, on OpenSea) -----------------------------
    No wallet connect on this site. The mint lives on OpenSea - every "mint" button is
    just an outbound link to BRAND.opensea. This panel is pure FOMO/marketing display.   */
@@ -1048,7 +1031,6 @@ function setNavUser() {
 }
 
 async function initApplyPage() {
-  initTicker();
   // Paint something instantly so the stage is never blank while auth/app loads.
   const stage = $("#applyStage");
   if (stage) stage.innerHTML = `<div class="apply__card"><span class="step__kicker">Initiation</span><h2 class="step__title">Loading...</h2><p class="step__desc">Pulling up the receipts on your bad decisions.</p></div>`;
@@ -1198,7 +1180,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // The dedicated initiation page has its own flow.
   if (IS_APPLY()) { initApplyPage(); return; }
 
-  initTicker();
   initHeroArt();
   initMint();
   initExhibit();
