@@ -494,7 +494,7 @@ function stepBurn() {
       real time. <b>The more you burn, the higher your approval odds.</b></p>
 
     <p class="bonus-line">Boost your odds: burn it <b>live</b> on stream or in a public road and tag
-      <b>@NGMI</b> in the video. Burn it <b>fully naked</b> and you skip review entirely - instant whitelist.</p>
+      <b>@engmiHQ</b> in the video. Burn it <b>fully naked</b> and you skip review entirely - instant whitelist.</p>
 
     <div class="field">
       <label>Wallet</label>
