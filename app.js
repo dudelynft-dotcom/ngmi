@@ -260,6 +260,8 @@ function openModal(html) {
   if (IS_APPLY()) {
     const stage = $("#applyStage");
     if (stage) {
+      const main = document.querySelector("main.apply"); if (main) main.classList.remove("apply--wide");
+      const rail = document.querySelector(".apply__rail"); if (rail) rail.style.display = "";
       stage.innerHTML = `<div class="apply__card">${html}</div>`;
       stage.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", () => { window.location.href = "/"; }));
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -900,67 +902,14 @@ async function stepDone() {
     spot = spot ?? (MintState.claimed + 1);
   }
   WL.approval = approval;
-  const approved = status === "approved";
-
-  const burnTxRows = (WL.burns || []).filter(b => b.tx).map((b, i) =>
-    `<div><span>Burn ${i + 1} tx</span><b><a href="${explorerTx(b.tx, WL.chainId)}" target="_blank" rel="noopener" style="color:var(--rug)">${b.tx.slice(0, 8)}…${b.tx.slice(-6)} ↗</a></b></div>`
-  ).join("") || `<div><span>Burn</span><b>demo (no wallet)</b></div>`;
-
-  const receipt = `
-      <div class="wl-receipt">
-        <div><span>Degen</span><b>${WL.handle}</b></div>
-        <div><span>Rugged for</span><b class="down" style="color:var(--rug)">$${(WL.lostUsd || "").replace(/[^0-9.,]/g,"") || "∞"}</b></div>
-        <div><span>Bags burned</span><b>${(WL.burns || []).length || "0"}</b></div>
-        <div><span>Bag ATH (you said)</span><b>${escapeHtml(WL.nftAth || "-")}</b></div>
-        <div><span>Approval score</span><b style="background:var(--acid);padding:1px 7px;border:1px solid var(--ink)">${approval}%</b></div>
-        ${burnTxRows}
-        ${WL.shameTweet ? `<div><span>Shame tweet</span><b><a href="${escapeHtml(WL.shameTweet)}" target="_blank" rel="noopener" style="color:var(--rug)">view ↗</a></b></div>` : ""}
-        <div><span>Status</span><b style="color:${approved ? "var(--acid-ink)" : "var(--rug)"}">${approved ? "APPROVED" : "PENDING REVIEW"}</b></div>
-      </div>`;
-
-  if (approved) {
-    openModal(`
-      <div class="wl-success">
-        <span class="step__kicker">Initiation complete · 100%</span>
-        <h2 class="step__title">You're whitelisted, ${WL.handle}</h2>
-        <div class="wl-success__num">#${String(spot).padStart(3, "0")}</div>
-        <p class="step__desc">Instant approval - you hit 100%. No human had to look at you.
-          You are now officially <strong>certified exit liquidity</strong>.</p>
-        ${receipt}
-        <div class="modal__foot">
-          <button class="btn btn--ghost" id="shareX">Post my shame to X</button>
-          <button class="btn btn--primary" data-close id="goMint">See you at the rug →</button>
-        </div>
-        <p class="wl__fine" style="color:var(--ink-soft);margin-top:14px">Reminder: this is a parody. Please do not actually burn anything or buy anything.</p>
-      </div>
-    `);
-    confettiOfPain();
-  } else {
-    openModal(`
-      <div class="wl-success">
-        <span class="step__kicker" style="color:var(--rug)">Application received · case ${approval}%</span>
-        <h2 class="step__title">You're in the queue, ${WL.handle}.</h2>
-        <div class="wl-success__num" style="background:var(--rug);color:#fff">${approval}%</div>
-        <p class="step__desc">There is <strong>no auto-whitelist</strong>. Every application is
-          hand-reviewed, and an admin will personally decide whether you're worthy of getting rugged
-          again. Your case strength is <strong>${approval}%</strong> - burn more bags, or higher-ATH
-          ones ($50+), to make it stronger before they look.</p>
-        ${receipt}
-        <div class="modal__foot">
-          <button class="btn btn--ghost" id="shareX">Post my shame to X</button>
-          <button class="btn btn--accent" id="burnMore">← Burn more to strengthen it</button>
-        </div>
-        <p class="wl__fine" style="color:var(--ink-soft);margin-top:14px">Reminder: this is a parody. Please do not actually burn anything or buy anything.</p>
-      </div>
-    `);
-    const bm = $("#burnMore"); if (bm) bm.onclick = stepBurn;
-  }
-
-  $("#shareX").onclick = () => {
-    const text = encodeURIComponent(`I just ${approved ? "got whitelisted for" : "applied to"} ${BRAND.name}. They told me to my face I'm exit liquidity and I said "bet". I have learned nothing. ngmi`);
-    window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank", "noopener");
+  const app = {
+    handle: WL.handle, status, approval, spot,
+    lost_usd: WL.lostUsd, cope: WL.cope, nft_ath: WL.nftAth,
+    chain_id: WL.chainId, burn_count: (WL.burns || []).length,
+    burns: WL.burns || [], shame_tweet: WL.shameTweet,
   };
-  const gm = $("#goMint"); if (gm) gm.onclick = () => closeModal();
+  showDashboard(app);
+  if (status === "approved") confettiOfPain();
 }
 
 function escapeHtml(s) {
@@ -1077,65 +1026,126 @@ async function fetchMyApplication(tries = 4) {
 
 // Returning applicant: read-only status screen (pending / approved / rejected).
 function stepStatus(app) {
-  setApplyStep(4);
-  const status = app.status || "pending";
-  const approved = status === "approved";
-  const rejected = status === "rejected";
-  const approval = app.approval || 0;
-  const burns = Array.isArray(app.burns) ? app.burns : [];
-
   // Pre-load so "burn more" keeps the existing answers and appends to existing burns.
   WL.lostUsd = app.lost_usd || WL.lostUsd;
   WL.cope = app.cope || WL.cope;
   WL.nftAth = app.nft_ath || WL.nftAth;
-  WL.priorBurns = burns;
-  WL.approval = approval;
+  WL.priorBurns = Array.isArray(app.burns) ? app.burns : [];
+  WL.approval = app.approval || 0;
+  showDashboard(app);
+}
 
+/* ----------------------------- THE RUG DASHBOARD -----------------------------
+   The post-application view: a satirical "treasury terminal" that brags about how
+   much was raised to rug the user, plus their real application file.            */
+function shareShame(app) {
+  const approved = app && app.status === "approved";
+  const text = encodeURIComponent(`I just ${approved ? "got whitelisted for" : "applied to"} ${BRAND.name}. They told me to my face I'm exit liquidity and I said "bet". I have learned nothing. ngmi`);
+  window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank", "noopener");
+}
+function animateRaiseCounter() {
+  const el = $("#dashRaise"); if (!el) return;
+  const target = 100000000, dur = 1200, t0 = performance.now();
+  (function tick(now) {
+    const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+    el.textContent = "$" + Math.floor(target * e).toLocaleString("en-US");
+    if (p < 1) requestAnimationFrame(tick);
+  })(t0);
+}
+function fillHolders() {
+  const el = $("#dashHolders"); if (!el) return;
+  fetch("/api/whitelist/count", { cache: "no-store" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(d => { if (d && typeof d.count === "number") el.textContent = d.count.toLocaleString("en-US"); })
+    .catch(() => {});
+}
+function showDashboard(app) {
+  setApplyStep(4);
+  const html = dashboardMarkup(app);
+  if (IS_APPLY() && $("#applyStage")) {
+    const main = document.querySelector("main.apply"); if (main) main.classList.add("apply--wide");
+    const rail = document.querySelector(".apply__rail"); if (rail) rail.style.display = "none";
+    $("#applyStage").innerHTML = html;
+    window.scrollTo({ top: 0 });
+  } else {
+    openModal(html);
+  }
+  const bm = $("#dashBurnMore"); if (bm) bm.onclick = stepBurn;
+  const sx = $("#dashShare"); if (sx) sx.onclick = () => shareShame(app);
+  animateRaiseCounter();
+  fillHolders();
+}
+function dashboardMarkup(app) {
+  const status = (app.status || "pending").toLowerCase();
+  const approved = status === "approved", rejected = status === "rejected";
+  const approval = app.approval || 0;
+  const burns = Array.isArray(app.burns) ? app.burns : [];
+  const handle = escapeHtml(app.handle || WL.handle || "anon");
+  const lost = String(app.lost_usd || "").replace(/[^0-9.,]/g, "") || "0";
+  const rank = app.spot ? "#" + String(app.spot).padStart(4, "0") : "#????";
+  const pill = approved
+    ? `<span class="dash-pill dash-pill--ok">WHITELISTED</span>`
+    : rejected
+    ? `<span class="dash-pill dash-pill--dead">DENIED</span>`
+    : `<span class="dash-pill dash-pill--warn">PENDING REVIEW</span>`;
   const burnRows = burns.filter(b => b.tx).map((b, i) =>
-    `<div><span>Burn ${i + 1} tx</span><b><a href="${explorerTx(b.tx, app.chain_id)}" target="_blank" rel="noopener" style="color:var(--rug)">${String(b.tx).slice(0, 8)}…${String(b.tx).slice(-6)} ↗</a></b></div>`
-  ).join("") || `<div><span>Bags burned</span><b>${app.burn_count || burns.length || 0}</b></div>`;
-
-  const badge = approved
-    ? `<div class="wl-success__num">#${String(app.spot).padStart(3, "0")}</div>`
-    : `<div class="wl-success__num" style="background:${rejected ? "var(--ink)" : "var(--rug)"};color:#fff">${rejected ? "DENIED" : approval + "%"}</div>`;
-
-  const kicker = approved ? "You're in" : rejected ? "Application denied" : "Application pending";
-  const title = approved
-    ? `You're whitelisted, ${WL.handle}.`
+    `<div><span>Burn ${i + 1}</span><b><a class="dash-link" href="${explorerTx(b.tx, app.chain_id)}" target="_blank" rel="noopener">${String(b.tx).slice(0, 8)}…${String(b.tx).slice(-6)} ↗</a></b></div>`
+  ).join("");
+  const headline = approved ? `You're whitelisted, ${handle}.` : rejected ? `Denied, ${handle}. Brutal.` : `Welcome to the treasury, ${handle}.`;
+  const sub = approved
+    ? `Certified exit liquidity. An admin signed off. Now you wait for the rug like everyone else.`
     : rejected
-    ? `Denied, ${WL.handle}. The committee said no.`
-    : `You've already applied, ${WL.handle}.`;
-  const desc = approved
-    ? `An admin approved you. You are certified <strong>exit liquidity</strong>. Sit tight for the mint.`
-    : rejected
-    ? `An admin reviewed you and passed. Brutal. You can burn more bags and resubmit to try again.`
-    : `Your application is in the manual review queue. There is no auto-whitelist - an admin decides every one by hand. Your case strength is <strong>${approval}%</strong>. Burn more bags (higher ATH = stronger) to improve it before they look.`;
+    ? `An admin passed on you. Burn more bags and resubmit if you want to be rugged this badly.`
+    : `Your application is logged. You are officially the product. Here is the dashboard that proves it.`;
 
-  openModal(`
-    <div class="wl-success">
-      <span class="step__kicker"${approved ? "" : ` style="color:var(--rug)"`}>${kicker}</span>
-      <h2 class="step__title">${title}</h2>
-      ${badge}
-      <p class="step__desc">${desc}</p>
-      <div class="wl-receipt">
-        <div><span>Degen</span><b>${WL.handle}</b></div>
-        <div><span>Rugged for</span><b class="down" style="color:var(--rug)">$${(app.lost_usd || "").replace(/[^0-9.,]/g, "") || "—"}</b></div>
-        <div><span>Your plan this time</span><b>${escapeHtml(app.cope || "—")}</b></div>
-        <div><span>Bag ATH (you said)</span><b>${escapeHtml(app.nft_ath || "—")}</b></div>
-        <div><span>Approval score</span><b style="background:var(--acid);padding:1px 7px;border:1px solid var(--ink)">${approval}%</b></div>
-        ${burnRows}
-        ${app.shame_tweet ? `<div><span>Shame tweet</span><b><a href="${escapeHtml(app.shame_tweet)}" target="_blank" rel="noopener" style="color:var(--rug)">view ↗</a></b></div>` : ""}
-        <div><span>Status</span><b style="color:${approved ? "var(--acid-ink)" : "var(--rug)"}">${status.toUpperCase()}</b></div>
+  return `
+  <div class="dash">
+    <div class="dash__bar">
+      <div>
+        <span class="dash__eyebrow">// EXIT LIQUIDITY TERMINAL</span>
+        <h1 class="dash__title">${headline}</h1>
+        <p class="dash__sub">${sub}</p>
       </div>
-      <div class="modal__foot">
-        <a class="btn btn--ghost" href="/ruglist">See the Ruglist</a>
-        ${approved ? `<button class="btn btn--primary" data-close>See you at the rug</button>`
-                   : `<button class="btn btn--accent" id="burnMoreStatus">Burn more bags</button>`}
-      </div>
-      <p class="wl__fine" style="color:var(--ink-soft);margin-top:14px">Reminder: this is a parody. Please do not actually burn anything or buy anything.</p>
+      <div class="dash__id">${pill}<span class="dash__rank">RANK ${rank}</span></div>
     </div>
-  `);
-  const bm = $("#burnMoreStatus"); if (bm) bm.onclick = stepBurn;
+
+    <div class="dash__hero">
+      <span class="dash__hero-label">Capital raised to rug you</span>
+      <div class="dash__hero-num" id="dashRaise">$100,000,000</div>
+      <div class="dash__hero-bar"><div class="dash__hero-fill"></div></div>
+      <span class="dash__hero-foot">97% of rug target reached — we just needed your bag to close it out.</span>
+    </div>
+
+    <div class="dash__grid">
+      <div class="dash__card"><span>Your contribution</span><b class="down">$${lost}</b><small>already donated to exit scams</small></div>
+      <div class="dash__card"><span>Bags burned for us</span><b>${app.burn_count || burns.length || 0}</b><small>thanks for the deflation</small></div>
+      <div class="dash__card"><span>Case strength</span><b class="acid">${approval}%</b><small>an admin still decides by hand</small></div>
+      <div class="dash__card"><span>Degens in line</span><b id="dashHolders">—</b><small>your fellow exit liquidity</small></div>
+      <div class="dash__card"><span>Mint price</span><b>FREE<span class="ast">*</span></b><small>*reprices to $69 before mint</small></div>
+      <div class="dash__card"><span>Rug ETA</span><b class="down">SOON™</b><small>when you least expect it</small></div>
+    </div>
+
+    <div class="dash__panel">
+      <div class="dash__panel-head"><span>// YOUR FILE</span>${pill}</div>
+      <div class="dash__rows">
+        <div><span>Degen</span><b>${handle}</b></div>
+        <div><span>Rugged for</span><b class="down">$${lost}</b></div>
+        <div><span>Plan this time</span><b>${escapeHtml(app.cope || "—")}</b></div>
+        <div><span>Bag ATH (you said)</span><b>${escapeHtml(app.nft_ath || "—")}</b></div>
+        ${burnRows || `<div><span>Bags burned</span><b>${app.burn_count || 0}</b></div>`}
+        ${app.shame_tweet ? `<div><span>Shame tweet</span><b><a class="dash-link" href="${escapeHtml(app.shame_tweet)}" target="_blank" rel="noopener">view ↗</a></b></div>` : ""}
+        <div><span>Status</span><b class="${approved ? "acid" : "down"}">${status.toUpperCase()}</b></div>
+      </div>
+    </div>
+
+    <div class="dash__actions">
+      <button class="btn btn--ghost" id="dashShare">Post my shame to X</button>
+      ${approved ? "" : `<button class="btn btn--accent" id="dashBurnMore">${rejected ? "Burn more & resubmit" : "Burn more bags — raise your odds"}</button>`}
+      <a class="btn btn--ghost" href="/ruglist">The Ruglist</a>
+      <a class="btn btn--ghost" href="/">Back to site</a>
+    </div>
+    <p class="dash__fine">Parody / satire. The numbers are fake, the rug is a bit, no mint is promised. Do not actually burn or buy anything.</p>
+  </div>`;
 }
 
 /* ----------------------------- DESIGN / MOTION ----------------------------- */
