@@ -509,6 +509,11 @@ code { font-family: var(--mono); font-size: .9em; background: var(--paper-3); pa
 .tweetbar__cta { font-weight: 700; color: var(--rug); white-space: nowrap; }
 @media (max-width: 460px) { .tweetbar { font-size: 12px; padding: 8px 13px; gap: 8px; } }
 
+/* Nav user chip (copy-username button on dashboard pages) */
+.nav__userbtn { font-family: var(--mono); font-weight: 700; font-size: 13px; background: var(--paper-2); border: 2px solid var(--ink); border-radius: 999px; padding: 6px 14px; cursor: pointer; color: var(--ink); display: inline-flex; align-items: center; gap: 6px; box-shadow: 3px 3px 0 var(--ink); transition: transform .1s, box-shadow .1s; text-decoration: none; line-height: 1.2; }
+.nav__userbtn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
+.nav__userbtn.copied { background: var(--acid); color: var(--acid-ink); }
+
 /* "Boost your odds" callout */
 .wl__bonus { display: flex; gap: 18px; align-items: center; background: var(--ink); color: var(--paper); border: 2px solid var(--acid); border-radius: 4px; padding: 16px 18px; margin: 22px 0 12px; max-width: 720px; box-shadow: 6px 6px 0 var(--acid); }
 .wl__bonus-body { flex: 1; min-width: 0; }

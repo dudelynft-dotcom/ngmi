@@ -1025,12 +1025,27 @@ const OAUTH_ERRORS = {
 };
 
 /* ----------------------------- /apply PAGE ----------------------------- */
+// A username chip that copies "@handle" on click (a proper dashboard button).
+function navUserCopyChip(username) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "nav__userbtn";
+  btn.title = "Click to copy";
+  btn.textContent = "@" + username;
+  btn.onclick = () => {
+    const txt = "@" + username;
+    (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => {
+      btn.classList.add("copied"); btn.textContent = "copied ✓";
+      setTimeout(() => { btn.classList.remove("copied"); btn.textContent = txt; }, 1200);
+    }).catch(() => {});
+  };
+  return btn;
+}
 function setNavUser() {
   const el = $("#navUser");
   if (!el) return;
-  el.innerHTML = APP.user
-    ? `<a href="https://x.com/${encodeURIComponent(APP.user.username)}" target="_blank" rel="noopener">@${escapeHtml(APP.user.username)}</a>`
-    : "";
+  el.innerHTML = "";
+  if (APP.user) el.appendChild(navUserCopyChip(APP.user.username));
 }
 
 async function initApplyPage() {
@@ -1319,4 +1334,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.title = `${BRAND.name} - 10,000 Pre-Rugged Pepes`;
 
   await checkAuth();
+  // Already logged in? Swap the "Join Whitelist" button for a username chip that opens the dashboard.
+  if (APP.user) {
+    const wl = $("#navWl");
+    if (wl) {
+      const a = document.createElement("a");
+      a.className = "btn btn--accent";
+      a.href = "/apply";
+      a.id = "navWl";
+      a.title = "Open your dashboard";
+      a.textContent = "@" + APP.user.username;
+      wl.replaceWith(a);
+    }
+  }
 });

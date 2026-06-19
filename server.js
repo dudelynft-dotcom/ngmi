@@ -401,14 +401,11 @@ app.get("/api/nfts", async (req, res) => {
 
 /* --- 3e. Collection metadata (name + image) by contract --- */
 const collMetaCache = new Map();
-app.get("/api/collection-image", async (req, res) => {
-  res.set("Cache-Control", "public, max-age=86400");
-  const contract = String(req.query.contract || "");
-  const chainId = String(req.query.chainId || "0x1");
-  const net = ALCHEMY_NETWORKS[chainId];
-  if (!ALCHEMY_KEY || !net || !/^0x[0-9a-fA-F]{40}$/.test(contract)) return res.json({ image: "", name: "" });
-  const cacheKey = chainId + ":" + contract.toLowerCase();
-  if (collMetaCache.has(cacheKey)) return res.json(collMetaCache.get(cacheKey));
+async function fetchCollMeta(contract, chainId) {
+  const net = ALCHEMY_NETWORKS[chainId] || ALCHEMY_NETWORKS["0x1"];
+  if (!ALCHEMY_KEY || !net || !/^0x[0-9a-fA-F]{40}$/.test(contract)) return { image: "", name: "" };
+  const cacheKey = (chainId || "0x1") + ":" + contract.toLowerCase();
+  if (collMetaCache.has(cacheKey)) return collMetaCache.get(cacheKey);
   try {
     const url = `https://${net}.g.alchemy.com/nft/v3/${ALCHEMY_KEY}/getContractMetadata?contractAddress=${contract}`;
     const r = await fetch(url);
@@ -418,8 +415,12 @@ app.get("/api/collection-image", async (req, res) => {
     const name = c?.openSeaMetadata?.collectionName || c?.name || "";
     const meta = { image, name };
     collMetaCache.set(cacheKey, meta);
-    res.json(meta);
-  } catch { res.json({ image: "", name: "" }); }
+    return meta;
+  } catch { return { image: "", name: "" }; }
+}
+app.get("/api/collection-image", async (req, res) => {
+  res.set("Cache-Control", "public, max-age=86400");
+  res.json(await fetchCollMeta(String(req.query.contract || ""), String(req.query.chainId || "0x1")));
 });
 
 /* --- 3f. NGMI Points + quests (tasks are admin-manageable, stored in Neon) --- */
@@ -557,6 +558,15 @@ app.post("/api/whitelist", async (req, res) => {
         tx: s(b && b.tx, 80),
       }))
     : [];
+
+  // Resolve the real collection name from the contract (so it never stores "your bag").
+  const burnChain = s(chainId, 16) || "0x1";
+  for (const b of cleanBurns) {
+    if ((!b.projectName || /^your bag$/i.test(b.projectName)) && b.contract) {
+      const m = await fetchCollMeta(b.contract, burnChain).catch(() => null);
+      if (m && m.name) b.projectName = m.name;
+    }
+  }
 
   // Score is the applicant's "case strength" shown to the admin. NOTHING auto-approves:
   // every application is created as pending and an admin decides each one manually.
