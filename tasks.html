@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NGMI - Points</title>
+  <meta name="description" content="No NFT to burn? Farm worthless NGMI Points instead and still get a shot at whitelist." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=36" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0b'/><text x='50' y='72' font-size='62' font-family='monospace' font-weight='bold' fill='%23c6f24e' text-anchor='middle'>N</text></svg>" />
+  <style>
+    .pts { max-width: 880px; margin: 0 auto; padding: 24px clamp(16px,4vw,40px) 90px; }
+    .pts__kick { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--rug); font-weight: 700; }
+    .pts__head h1 { font-family: var(--poster); font-weight: 400; font-size: clamp(36px,7vw,60px); line-height: .92; margin: 8px 0 10px; text-transform: uppercase; }
+    .pts__head p { color: var(--ink-soft); max-width: 660px; margin: 0; font-size: 15px; }
+    .pts__balance { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin: 22px 0; padding: 18px 22px; border: 3px solid var(--ink); border-radius: 6px; background: var(--ink); color: var(--paper); box-shadow: 8px 8px 0 var(--acid); }
+    .pts__balance-label { display: block; font-family: var(--mono); font-size: 12px; letter-spacing: .05em; text-transform: uppercase; opacity: .8; }
+    .pts__balance b { font-family: var(--poster); font-weight: 400; font-size: clamp(40px,9vw,64px); line-height: 1; color: var(--acid); }
+    .pts__list { display: grid; gap: 10px; }
+    .task { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 15px 18px; border: 2px solid var(--ink); border-radius: 5px; background: var(--paper-2); }
+    .task.done { opacity: .55; }
+    .task__label { font-family: var(--font); font-weight: 900; font-size: 16px; }
+    .task__desc { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); margin-top: 3px; }
+    .task__right { display: flex; align-items: center; gap: 12px; flex: none; }
+    .task__pts { font-family: var(--poster); font-size: 22px; color: var(--rug); }
+    .task__btn { white-space: nowrap; }
+    .task__btn.is-done { background: transparent; border: 2px solid var(--ink); color: var(--ink-soft); cursor: default; }
+    .pts__empty { font-family: var(--mono); color: var(--ink-soft); padding: 30px; text-align: center; }
+    .pts__fine { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin-top: 22px; line-height: 1.5; }
+    @media (max-width: 560px) { .task { flex-direction: column; align-items: flex-start; } .task__right { width: 100%; justify-content: space-between; } }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <a class="nav__brand" href="/"><span class="nav__mark">NG</span><span class="nav__name">MI</span></a>
+    <nav class="nav__links">
+      <a href="/manifesto">Manifesto</a>
+      <a href="/collection">Collection</a>
+      <a href="/ruglist">Ruglist</a>
+      <a href="/tasks">Points</a>
+      <a href="/roadmap">Roadmap</a>
+      <a href="/faq">FAQ</a>
+    </nav>
+    <div class="nav__right">
+      <span class="nav__user" id="navUser"></span>
+      <a class="nav__back" href="/">Back to site</a>
+    </div>
+    <button class="nav__toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </header>
+
+  <main class="pts">
+    <div class="pts__head">
+      <span class="pts__kick">// NGMI POINTS</span>
+      <h1>Farm points, beggar.</h1>
+      <p>No NFT to burn? Of course you don't. Earn NGMI Points instead and still get a shot at the
+        whitelist. We will <em>absolutely</em> do something with these points. Probably rug you via
+        point farming, then drop an NGMI token after mint. You know exactly how this ends, and you're
+        going to farm anyway.</p>
+    </div>
+
+    <div class="pts__balance">
+      <div>
+        <span class="pts__balance-label">Your NGMI points</span>
+        <b id="ptsBalance">—</b>
+      </div>
+      <a class="btn btn--accent" id="ptsCta" href="/apply">Complete application (+1000)</a>
+    </div>
+
+    <div class="pts__list" id="ptsList"><div class="pts__empty">Loading quests...</div></div>
+    <p class="pts__fine">NGMI Points are worthless. They have no value, no guarantee, no utility, and possibly no future.
+      That is the entire joke. Nothing here is investment advice; it is the opposite.</p>
+  </main>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const $$ = (s) => Array.from(document.querySelectorAll(s));
+    const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+    let authed = false;
+
+    async function load() {
+      try {
+        const r = await fetch("/api/points/me", { cache: "no-store" });
+        const d = await r.json();
+        authed = !!d.authed;
+        $("#ptsBalance").textContent = d.authed ? Number(d.balance || 0).toLocaleString() : "—";
+        $("#ptsCta").textContent = (d.claimed || []).includes("apply") ? "Application done ✓" : "Complete application (+1000)";
+        renderTasks(d.tasks || [], d.claimed || [], d.authed);
+      } catch { $("#ptsList").innerHTML = `<div class="pts__empty">Could not load quests. Refresh.</div>`; }
+    }
+
+    function renderTasks(tasks, claimed, authed) {
+      $("#ptsList").innerHTML = tasks.map(t => {
+        const done = claimed.includes(t.id);
+        let btn;
+        if (done) btn = `<button class="btn task__btn is-done" disabled>Claimed ✓</button>`;
+        else if (!authed) btn = `<a class="btn btn--ghost task__btn" href="/auth/x/login">Login to farm</a>`;
+        else if (t.auto) btn = `<a class="btn btn--accent task__btn" href="${esc(t.url || "/apply")}">Go →</a>`;
+        else btn = `<button class="btn btn--accent task__btn" data-id="${esc(t.id)}" data-url="${esc(t.url || "")}">Do it +${t.points}</button>`;
+        return `<div class="task ${done ? "done" : ""}">
+          <div class="task__main">
+            <div class="task__label">${esc(t.label)}</div>
+            <div class="task__desc">${esc(t.desc || "")}</div>
+          </div>
+          <div class="task__right"><span class="task__pts">+${t.points}</span>${btn}</div>
+        </div>`;
+      }).join("");
+      $$(".task__btn[data-id]").forEach(b => b.onclick = () => claim(b));
+    }
+
+    async function claim(btn) {
+      const id = btn.getAttribute("data-id"), url = btn.getAttribute("data-url");
+      if (url) window.open(url, "_blank", "noopener");
+      btn.disabled = true; btn.textContent = "Claiming...";
+      try {
+        const r = await fetch("/api/points/claim", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ taskId: id }) });
+        const d = await r.json();
+        if (d.ok) { $("#ptsBalance").textContent = Number(d.balance || 0).toLocaleString(); load(); }
+        else { btn.disabled = false; btn.textContent = "Do it"; }
+      } catch { btn.disabled = false; btn.textContent = "Do it"; }
+    }
+
+    async function showUser() {
+      try {
+        const r = await fetch("/auth/me", { headers: { Accept: "application/json" } });
+        if (!r.ok) return;
+        const u = (await r.json()).user;
+        if (u) $("#navUser").innerHTML = `<a href="https://x.com/${encodeURIComponent(u.username)}" target="_blank" rel="noopener">@${esc(u.username)}</a>`;
+      } catch {}
+    }
+
+    load(); showUser();
+    (function () {
+      const nav = document.querySelector(".nav"), tog = $("#navToggle");
+      if (!nav || !tog) return;
+      tog.onclick = () => { const o = nav.classList.toggle("nav--open"); tog.setAttribute("aria-expanded", o ? "true" : "false"); };
+      nav.querySelectorAll(".nav__links a").forEach(a => a.addEventListener("click", () => nav.classList.remove("nav--open")));
+    })();
+  </script>
+</body>
+</html>

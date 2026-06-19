@@ -1082,6 +1082,13 @@ function fillHolders() {
     .then(d => { if (d && typeof d.count === "number") el.textContent = d.count.toLocaleString("en-US"); })
     .catch(() => {});
 }
+function fillPoints() {
+  const el = $("#dashPoints"); if (!el) return;
+  fetch("/api/points/me", { cache: "no-store" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(d => { if (d && typeof d.balance === "number") el.textContent = d.balance.toLocaleString("en-US"); })
+    .catch(() => {});
+}
 function showDashboard(app) {
   setApplyStep(4);
   const html = dashboardMarkup(app);
@@ -1097,6 +1104,7 @@ function showDashboard(app) {
   const sx = $("#dashShare"); if (sx) sx.onclick = () => shareShame(app);
   animateRaiseCounter();
   fillHolders();
+  fillPoints();
 }
 function dashboardMarkup(app) {
   const status = (app.status || "pending").toLowerCase();
@@ -1143,6 +1151,7 @@ function dashboardMarkup(app) {
       <div class="dash__card"><span>Your contribution</span><b class="down">$${lost}</b><small>already donated to exit scams</small></div>
       <div class="dash__card"><span>Bags burned for us</span><b>${app.burn_count || burns.length || 0}</b><small>thanks for the deflation</small></div>
       <div class="dash__card"><span>Case strength</span><b class="acid">${approval}%</b><small>an admin still decides by hand</small></div>
+      <div class="dash__card"><span>NGMI points</span><b class="acid" id="dashPoints">—</b><small><a href="/tasks" style="color:inherit;border-bottom:2px solid var(--acid)">farm more →</a></small></div>
       <div class="dash__card"><span>Degens in line</span><b id="dashHolders">—</b><small>your fellow exit liquidity</small></div>
       <div class="dash__card"><span>Mint price</span><b>FREE<span class="ast">*</span></b><small>*reprices to $69 before mint</small></div>
       <div class="dash__card"><span>Rug ETA</span><b class="down">SOON™</b><small>when you least expect it</small></div>

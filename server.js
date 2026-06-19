@@ -39,6 +39,7 @@ const ME_URL = "https://api.twitter.com/2/users/me?user.fields=profile_image_url
 
 const DATA_DIR = path.join(__dirname, "data");
 const WL_FILE = path.join(DATA_DIR, "whitelist.json");
+const POINTS_FILE = path.join(DATA_DIR, "points.json");
 // On serverless (Vercel) the filesystem is read-only - the JSON fallback just won't be used there
 // (Neon is reachable from Vercel), so don't crash if we can't create the dir.
 try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch {}
@@ -59,6 +60,12 @@ function readWhitelist() {
 }
 function writeWhitelist(list) {
   fs.writeFileSync(WL_FILE, JSON.stringify(list, null, 2));
+}
+function readPoints() {
+  try { return JSON.parse(fs.readFileSync(POINTS_FILE, "utf8")); } catch { return {}; }
+}
+function writePoints(obj) {
+  try { fs.writeFileSync(POINTS_FILE, JSON.stringify(obj, null, 2)); } catch {}
 }
 // Map a file-stored entry (camelCase) to the same shape the Neon queries return (snake_case).
 function fileEntryToApi(e) {
@@ -117,6 +124,10 @@ async function initDb() {
   )`;
   await tsql`ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending'`;
   await tsql`ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS shame_tweet TEXT`;
+  await tsql`CREATE TABLE IF NOT EXISTS points (
+    user_id TEXT PRIMARY KEY, handle TEXT, balance INTEGER DEFAULT 0,
+    claimed JSONB DEFAULT '[]'::jsonb, updated_at TIMESTAMPTZ DEFAULT now()
+  )`;
   console.log("   Storage: Neon Postgres ✅");
 }
 
@@ -400,6 +411,69 @@ app.get("/api/collection-image", async (req, res) => {
 });
 
 /* --- 4. Whitelist submission (requires X login) ---------------- */
+/* --- 3f. NGMI Points (quests for beggars with no NFT to burn) --- */
+const X_HANDLE = process.env.X_HANDLE || "engmiHQ";
+const PINNED_TWEET = process.env.PINNED_TWEET || "https://x.com/engmiHQ/status/2067881636310536628";
+const intent = (text) => "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
+const TASKS = [
+  { id: "apply",   points: 1000, label: "Complete the whitelist application", desc: "Login, confess, burn (or skip the burn and farm here). Auto-awarded on submit.", auto: true, url: "/apply" },
+  { id: "follow",  points: 250,  label: `Follow @${X_HANDLE} on X`, desc: "We will not follow back. We do not care about you. Follow anyway.", url: `https://x.com/${X_HANDLE}` },
+  { id: "repost",  points: 250,  label: "Repost the launch post", desc: "Amplify your own exit liquidity to your followers.", url: PINNED_TWEET },
+  { id: "post",    points: 300,  label: `Post that you're exit liquidity, tag @${X_HANDLE}`, desc: "Public admission of being NGMI. Cathartic.", url: intent(`I am the exit liquidity. @${X_HANDLE} told me to my face and I said bet. ngmi https://engmi.fun`) },
+  { id: "invite",  points: 200,  label: "Quote-post and drag 3 friends in", desc: "Misery loves company. Bring more exit liquidity.", url: intent(`burn your bags, farm worthless points, get rugged together. @${X_HANDLE} https://engmi.fun`) },
+];
+const TASK_BY_ID = Object.fromEntries(TASKS.map((t) => [t.id, t]));
+const publicTasks = () => TASKS.map((t) => ({ id: t.id, label: t.label, desc: t.desc, points: t.points, url: t.url || null, auto: !!t.auto }));
+
+async function getPointsRow(userId) {
+  if (neonUp()) {
+    try { const r = await neonRead(() => sql`SELECT balance, claimed FROM points WHERE user_id = ${userId}`); return r[0] || null; }
+    catch (e) { neonFailed(e); }
+  }
+  const p = readPoints();
+  return p[userId] ? { balance: p[userId].balance, claimed: p[userId].claimed } : null;
+}
+async function awardPoints(user, taskId) {
+  const task = TASK_BY_ID[taskId];
+  if (!task) return { ok: false, error: "unknown task" };
+  const handle = "@" + user.username;
+  if (neonUp()) {
+    try {
+      await tsql`INSERT INTO points (user_id, handle) VALUES (${user.id}, ${handle}) ON CONFLICT (user_id) DO UPDATE SET handle = EXCLUDED.handle`;
+      const cur = await tsql`SELECT balance, claimed FROM points WHERE user_id = ${user.id}`;
+      const claimed = cur[0].claimed || [];
+      if (claimed.includes(taskId)) return { ok: true, already: true, balance: cur[0].balance, claimed };
+      const rows = await tsql`UPDATE points SET balance = balance + ${task.points}, claimed = claimed || ${JSON.stringify([taskId])}::jsonb, updated_at = now() WHERE user_id = ${user.id} RETURNING balance, claimed`;
+      return { ok: true, balance: rows[0].balance, claimed: rows[0].claimed };
+    } catch (e) { neonFailed(e); }
+  }
+  const p = readPoints();
+  const rec = p[user.id] || { handle, balance: 0, claimed: [] };
+  rec.handle = handle;
+  const already = rec.claimed.includes(taskId);
+  if (!already) { rec.balance += task.points; rec.claimed.push(taskId); }
+  p[user.id] = rec; writePoints(p);
+  return { ok: true, already, balance: rec.balance, claimed: rec.claimed };
+}
+
+app.get("/api/points/me", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const user = req.session.user;
+  if (!user) return res.json({ ok: true, authed: false, balance: 0, claimed: [], tasks: publicTasks() });
+  const row = await getPointsRow(user.id);
+  res.json({ ok: true, authed: true, handle: "@" + user.username, balance: row ? row.balance : 0, claimed: row ? row.claimed : [], tasks: publicTasks() });
+});
+app.post("/api/points/claim", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const user = req.session.user;
+  if (!user) return res.status(401).json({ ok: false, error: "Login with X first." });
+  const taskId = String((req.body || {}).taskId || "");
+  const task = TASK_BY_ID[taskId];
+  if (!task || task.auto) return res.status(400).json({ ok: false, error: "Not a claimable task." });
+  const r = await awardPoints(user, taskId);
+  res.json(r);
+});
+
 app.post("/api/whitelist", async (req, res) => {
   const user = req.session.user;
   if (!user) return res.status(401).json({ ok: false, error: "Login with X first." });
@@ -443,7 +517,8 @@ app.post("/api/whitelist", async (req, res) => {
           status = EXCLUDED.status, shame_tweet = EXCLUDED.shame_tweet, updated_at = now()
         RETURNING spot`;
       const totalRows = await tsql`SELECT count(*)::int AS n FROM whitelist`;
-      return res.json({ ok: true, spot: rows[0].spot, total: totalRows[0].n, approval: appr, status, athUsd, store: "neon" });
+      const pts = await awardPoints(user, "apply").catch(() => null);
+      return res.json({ ok: true, spot: rows[0].spot, total: totalRows[0].n, approval: appr, status, athUsd, store: "neon", points: pts ? pts.balance : 1000 });
     } catch (e) {
       neonFailed(e);
     }
@@ -461,7 +536,8 @@ app.post("/api/whitelist", async (req, res) => {
     };
     if (existing) Object.assign(existing, entry); else list.push(entry);
     writeWhitelist(list);
-    res.json({ ok: true, spot: entry.spot, total: list.length, approval: appr, status, athUsd, store: "file" });
+    const pts = await awardPoints(user, "apply").catch(() => null);
+    res.json({ ok: true, spot: entry.spot, total: list.length, approval: appr, status, athUsd, store: "file", points: pts ? pts.balance : 1000 });
   } catch (e) {
     console.error("whitelist file write error", e);
     res.status(500).json({ ok: false, error: "storage error" });
