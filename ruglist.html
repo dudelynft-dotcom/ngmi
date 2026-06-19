@@ -11,24 +11,37 @@
   <link rel="stylesheet" href="styles.css?v=30" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0b'/><text x='50' y='72' font-size='62' font-family='monospace' font-weight='bold' fill='%23c6f24e' text-anchor='middle'>N</text></svg>" />
   <style>
-    .rug { max-width: 1100px; margin: 0 auto; padding: 28px clamp(16px,4vw,40px) 90px; }
-    .rug__head { margin: 6px 0 22px; }
-    .rug__head h1 { font-family: var(--poster); font-weight: 400; font-size: clamp(40px,8vw,72px); line-height: .9; margin: 0; text-transform: uppercase; }
-    .rug__head p { color: var(--ink-soft); max-width: 640px; margin: 12px 0 0; }
-    .rug__count { font-family: var(--mono); font-weight: 700; font-size: 14px; margin: 16px 0; }
-    .rug__count b { font-family: var(--poster); font-size: 30px; color: var(--rug); vertical-align: -3px; margin-right: 6px; }
-    .rug__list { border-top: 2px solid var(--ink); }
-    .rug__row { display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; padding: 16px 2px; border-bottom: 2px solid var(--ink); align-items: center; }
-    .rug__main { min-width: 0; }
-    .rug__coll { font-family: var(--font); font-weight: 900; font-size: clamp(17px,2.6vw,22px); }
-    .rug__coll .tok { color: var(--ink-soft); font-weight: 700; }
-    .rug__by { font-family: var(--mono); font-size: 13px; color: var(--ink-soft); margin-top: 3px; }
-    .rug__by a { color: var(--ink); border-bottom: 2px solid var(--acid); }
-    .rug__right { text-align: right; font-family: var(--mono); font-size: 12px; white-space: nowrap; }
-    .rug__right a { color: var(--rug); text-decoration: underline; }
-    .rug__stamp { display: inline-block; font-family: var(--mono); font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: .04em; background: var(--ink); color: var(--paper); padding: 2px 7px; border-radius: 2px; }
-    .rug__empty { font-family: var(--mono); color: var(--ink-soft); padding: 40px 0; text-align: center; }
-    .rug__bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+    .exp { max-width: 1200px; margin: 0 auto; padding: 24px clamp(14px,4vw,40px) 90px; }
+    .exp__head { margin: 4px 0 16px; }
+    .exp__head h1 { font-family: var(--poster); font-weight: 400; font-size: clamp(36px,7vw,64px); line-height: .9; margin: 0; text-transform: uppercase; }
+    .exp__head p { color: var(--ink-soft); max-width: 700px; margin: 10px 0 0; font-size: 15px; }
+    .exp__bar { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0 18px; }
+
+    .exp__cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 18px; }
+    .exp__card { border: 2px solid var(--ink); border-radius: 4px; background: var(--paper-2); padding: 12px 15px; }
+    .exp__card > span { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-soft); }
+    .exp__card > b { display: block; font-family: var(--poster); font-weight: 400; font-size: 30px; line-height: 1.1; margin-top: 4px; }
+    .exp__card .mono { font-family: var(--mono); font-size: 15px; font-weight: 700; }
+    .exp__card .down { color: var(--rug); }
+
+    .exp__panel { border: 2px solid var(--ink); border-radius: 4px; background: var(--paper-2); overflow: hidden; }
+    .exp__panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 2px solid var(--ink); font-family: var(--mono); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .03em; }
+    .exp__panel-head .pulse { color: var(--rug); font-size: 11px; }
+    .exp__scroll { overflow-x: auto; }
+    table.exp__table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 13px; min-width: 880px; }
+    .exp__table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-soft); font-weight: 700; padding: 11px 14px; border-bottom: 2px solid var(--ink); white-space: nowrap; background: #ecebe1; }
+    .exp__table td { padding: 12px 14px; border-bottom: 1px solid rgba(11,11,11,.1); white-space: nowrap; vertical-align: middle; }
+    .exp__table tr:last-child td { border-bottom: none; }
+    .exp__table tbody tr:hover td { background: rgba(198,242,78,.12); }
+    .exp__hash, .exp__addr { color: #2563eb; text-decoration: none; }
+    .exp__hash:hover, .exp__addr:hover { text-decoration: underline; }
+    .exp__user { color: var(--ink); border-bottom: 2px solid var(--acid); text-decoration: none; }
+    .exp__method { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; background: var(--rug); color: #fff; padding: 2px 9px; border-radius: 3px; }
+    .exp__coll { font-family: var(--font); font-weight: 900; font-size: 14px; }
+    .exp__chip { display: inline-block; font-size: 11px; padding: 2px 9px; border: 1.5px solid var(--ink); border-radius: 20px; }
+    .exp__age { color: var(--ink-soft); }
+    .exp__empty { font-family: var(--mono); color: var(--ink-soft); padding: 40px 16px; text-align: center; }
+    @media (max-width: 600px) { .exp__card > b { font-size: 24px; } }
   </style>
 </head>
 <body>
@@ -51,26 +64,48 @@
     <button class="nav__toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
   </header>
 
-  <main class="rug">
-    <div class="rug__head">
+  <main class="exp">
+    <div class="exp__head">
       <h1>The Ruglist</h1>
-      <p>Every NFT publicly burned to get into NGMI. The collections that rugged these people, and
-        the people who set them on fire anyway. Sent to the dead address, on-chain, forever.</p>
+      <p>An on-chain burn explorer. Every NFT incinerated to get into NGMI, sent to the dead
+        address forever. The collections that rugged these people, and the people who lit the match.</p>
     </div>
-    <div class="rug__bar">
+    <div class="exp__bar">
       <a class="btn btn--accent" href="/apply">Add yours - burn a bag</a>
       <button class="btn btn--ghost" id="refresh">Refresh</button>
     </div>
-    <div class="rug__count" id="count"></div>
-    <div class="rug__list" id="list"><div class="rug__empty">Loading the wall of shame...</div></div>
+
+    <div class="exp__cards">
+      <div class="exp__card"><span>Bags incinerated</span><b id="cBurns" class="down">—</b></div>
+      <div class="exp__card"><span>Rugged souls</span><b id="cSouls">—</b></div>
+      <div class="exp__card"><span>Latest cremation</span><b id="cLatest" class="mono">—</b></div>
+      <div class="exp__card"><span>Burn address</span><b class="mono"><a class="exp__addr" target="_blank" rel="noopener" href="https://etherscan.io/address/0x000000000000000000000000000000000000dEaD">0x0000…dEaD</a></b></div>
+    </div>
+
+    <div class="exp__panel">
+      <div class="exp__panel-head"><span>Latest burns</span><span class="pulse">● live</span></div>
+      <div class="exp__scroll">
+        <table class="exp__table">
+          <thead><tr>
+            <th>Burn Tx</th><th>Method</th><th>Age</th><th>Collection</th><th>Token</th><th>Burned By</th><th>To</th><th>Chain</th>
+          </tr></thead>
+          <tbody id="rows"><tr><td colspan="8" class="exp__empty">Loading the wall of shame...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
   </main>
 
   <script>
     const $ = (s) => document.querySelector(s);
     const EXPLORERS = { "0x1":"https://etherscan.io", "0x89":"https://polygonscan.com", "0x2105":"https://basescan.org", "0xa":"https://optimistic.etherscan.io", "0xa4b1":"https://arbiscan.io", "0xaa36a7":"https://sepolia.etherscan.io", "0x14a34":"https://sepolia.basescan.org", "0x66eee":"https://sepolia.arbiscan.io", "0xaa37dc":"https://sepolia-optimism.etherscan.io", "0x13882":"https://amoy.polygonscan.com" };
+    const CHAINS = { "0x1":"Ethereum", "0x89":"Polygon", "0x2105":"Base", "0xa":"Optimism", "0xa4b1":"Arbitrum", "0xaa36a7":"Sepolia", "0x14a34":"Base Sepolia", "0x66eee":"Arb Sepolia", "0xaa37dc":"OP Sepolia", "0x13882":"Amoy" };
+    const DEAD = "0x000000000000000000000000000000000000dEaD";
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
     const txUrl = (tx, chain) => (EXPLORERS[chain] || "https://etherscan.io") + "/tx/" + tx;
+    const addrUrl = (chain) => (EXPLORERS[chain] || "https://etherscan.io") + "/address/" + DEAD;
     const shortId = (id) => { id = String(id || ""); return id.length > 12 ? id.slice(0, 12) + "..." : id; };
+    const shortHash = (h, n = 8) => { h = String(h || ""); return h.length > n + 6 ? h.slice(0, n) + "…" + h.slice(-6) : h; };
+    function timeAgo(ts) { ts = Number(ts); if (!ts) return "-"; let s = Math.max(1, Math.floor(Date.now() / 1000 - ts)); if (s < 60) return s + "s ago"; const m = Math.floor(s / 60); if (m < 60) return m + "m ago"; const h = Math.floor(m / 60); if (h < 24) return h + "h ago"; return Math.floor(h / 24) + "d ago"; }
 
     let warmTries = 0;
     async function load() {
@@ -79,34 +114,41 @@
         const d = await r.json().catch(() => ({}));
         if (r.status === 503 || d.warming) {           // DB waking up - retry, don't show "nobody burned"
           warmTries++;
-          $("#list").innerHTML = `<div class="rug__empty">Waking the database${".".repeat((warmTries % 3) + 1)}</div>`;
+          $("#rows").innerHTML = `<tr><td colspan="8" class="exp__empty">Waking the database${".".repeat((warmTries % 3) + 1)}</td></tr>`;
           return setTimeout(load, 2000);
         }
         warmTries = 0;
         render(d.rows || [], d.count || 0);
       } catch (e) {
-        $("#list").innerHTML = `<div class="rug__empty">Reconnecting...</div>`;
+        $("#rows").innerHTML = `<tr><td colspan="8" class="exp__empty">Reconnecting...</td></tr>`;
         setTimeout(load, 2500);
       }
     }
 
     function render(rows, count) {
-      $("#count").innerHTML = `<b>${count}</b> bag${count === 1 ? "" : "s"} incinerated and counting`;
-      if (!rows.length) { $("#list").innerHTML = `<div class="rug__empty">Nobody has burned anything yet. Be the first to torch your trauma.</div>`; return; }
-      $("#list").innerHTML = rows.map(r => {
-        const coll = esc(r.collection || "Unknown collection");
+      const souls = new Set(rows.map(r => (r.handle || "").toLowerCase()).filter(Boolean)).size;
+      $("#cBurns").textContent = count;
+      $("#cSouls").textContent = souls || "—";
+      $("#cLatest").textContent = rows.length ? timeAgo(rows[0].ts) : "—";
+      const tbody = $("#rows");
+      if (!rows.length) { tbody.innerHTML = `<tr><td colspan="8" class="exp__empty">No burns yet. Be the first to torch your trauma.</td></tr>`; return; }
+      tbody.innerHTML = rows.map(r => {
+        const chain = esc(r.chain_id || "0x1");
         const handle = esc(r.handle || "anon");
         const xUser = handle.replace(/^@/, "");
-        const tokenCell = r.tx
-          ? `<a href="${txUrl(esc(r.tx), esc(r.chain_id))}" target="_blank" rel="noopener">burn tx</a>`
-          : `<span class="rug__stamp">demo</span>`;
-        return `<div class="rug__row">
-          <div class="rug__main">
-            <div class="rug__coll">${coll} <span class="tok">#${esc(shortId(r.token_id))}</span></div>
-            <div class="rug__by">burned by <a href="https://x.com/${xUser}" target="_blank" rel="noopener">${handle}</a></div>
-          </div>
-          <div class="rug__right">${tokenCell}</div>
-        </div>`;
+        const txCell = r.tx
+          ? `<a class="exp__hash" href="${txUrl(esc(r.tx), chain)}" target="_blank" rel="noopener">${esc(shortHash(r.tx))}</a>`
+          : `<span class="exp__age">pending</span>`;
+        return `<tr>
+          <td>${txCell}</td>
+          <td><span class="exp__method">Burn</span></td>
+          <td class="exp__age">${timeAgo(r.ts)}</td>
+          <td><span class="exp__coll">${esc(r.collection || "Unknown")}</span></td>
+          <td>#${esc(shortId(r.token_id))}</td>
+          <td><a class="exp__user" href="https://x.com/${xUser}" target="_blank" rel="noopener">${handle}</a></td>
+          <td><a class="exp__addr" href="${addrUrl(chain)}" target="_blank" rel="noopener">${esc(shortHash(DEAD, 6))}</a></td>
+          <td><span class="exp__chip">${esc(CHAINS[chain] || "Chain")}</span></td>
+        </tr>`;
       }).join("");
     }
 
