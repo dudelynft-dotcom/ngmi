@@ -1202,7 +1202,7 @@ function dashboardMarkup(app) {
       <div class="dash__card"><span>Case strength</span><b class="acid">${approval}%</b><small>an admin still decides by hand</small></div>
       <div class="dash__card"><span>NGMI points</span><b class="acid" id="dashPoints">—</b><small><a href="/tasks" style="color:inherit;border-bottom:2px solid var(--acid)">farm more →</a></small></div>
       <div class="dash__card"><span>Degens in line</span><b id="dashHolders">—</b><small>your fellow exit liquidity</small></div>
-      <div class="dash__card"><span>Mint price</span><b>FREE<span class="ast">*</span></b><small>*reprices to $69 before mint</small></div>
+      <div class="dash__card"><span>Mint price</span><b class="down">NOT FREE</b><small>cheap maybe. free never, beggar.</small></div>
       <div class="dash__card"><span>Rug ETA</span><b class="down">SOON™</b><small>when you least expect it</small></div>
     </div>
 
