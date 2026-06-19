@@ -39,6 +39,7 @@ const svg = `
   </g>
 </svg>`;
 
-const r = new Resvg(svg, { font: { fontFiles: FONTS, loadSystemFonts: false, defaultFontFamily: "Permanent Marker" }, fitTo: { mode: "width", value: 1000 } });
+// Render at 2x (2000px) for a crisp profile picture after X's compression.
+const r = new Resvg(svg, { font: { fontFiles: FONTS, loadSystemFonts: false, defaultFontFamily: "Permanent Marker" }, fitTo: { mode: "width", value: 2000 } });
 fs.writeFileSync("assets/x-logo.png", r.render().asPng());
-console.log("wrote assets/x-logo.png");
+console.log("wrote assets/x-logo.png (2000x2000)");

@@ -23,9 +23,9 @@ const logoSvg = `
   <text x="500" y="730" font-family="Space Mono" font-weight="700" font-size="40" letter-spacing="8" fill="${SOFT}" text-anchor="middle">EXIT LIQUIDITY</text>
 </svg>`;
 
-// ---------- HEADER / BANNER ----------
-const pepeA = dataUri("assets/gallery/10.png");
-const pepeB = dataUri("assets/gallery/06.png");
+// ---------- HEADER / BANNER ----------  (full-res 1024px source pepes for sharpness)
+const pepeA = dataUri("assets/ref image/download (24).png");
+const pepeB = dataUri("assets/ref image/download (20).png");
 const headerSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="1500" height="500" viewBox="0 0 1500 500">
   ${dots}
@@ -53,5 +53,7 @@ function render(svg, w, out) {
   fs.writeFileSync(out, r.render().asPng());
   console.log("wrote", out);
 }
-render(logoSvg, 1000, "assets/x-logo.png");
-render(headerSvg, 1500, "assets/x-header.png");
+// Note: the live profile picture is the handwritten one from make-x-logo.js.
+// We keep the brutalist mark too, as a separate file, and render the banner at 2x for sharpness.
+render(logoSvg, 1200, "assets/x-logo-mark.png");
+render(headerSvg, 3000, "assets/x-header.png");

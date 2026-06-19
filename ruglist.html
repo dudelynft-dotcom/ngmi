@@ -95,8 +95,12 @@
 
     <div class="exp__panel" style="margin-bottom:18px">
       <div class="exp__panel-head"><span>Top ruggers</span><span class="pulse" style="color:var(--ink-soft)">most-burned collections</span></div>
-      <div class="ruggers" id="ruggers"><div class="exp__empty" style="padding:24px">—</div></div>
-      <button class="btn btn--ghost ruggers__more" id="ruggersMore" hidden>Show more fuckers</button>
+      <div class="exp__scroll">
+        <table class="exp__table" style="min-width:560px">
+          <thead><tr><th>Rank</th><th>Collection</th><th>Times burned</th><th>Souls rugged</th><th>Last burn</th></tr></thead>
+          <tbody id="topRows"><tr><td colspan="5" class="exp__empty">—</td></tr></tbody>
+        </table>
+      </div>
     </div>
 
     <div class="exp__panel">
@@ -142,54 +146,31 @@
       }
     }
 
-    // Top ruggers = the COLLECTIONS burned the most, shown as a PFP strip (right to left).
-    const avatarColor = (s) => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return `hsl(${h % 360} 42% 62%)`; };
+    // Top ruggers = the COLLECTIONS that got burned the most (the projects that rugged the most people).
     function renderTop(rows) {
       const map = new Map();
       for (const r of rows) {
         const name = r.collection || "Unknown";
         const key = name.toLowerCase();
-        if (!map.has(key)) map.set(key, { name, contract: r.contract || "", chainId: r.chain_id || "0x1", burns: 0, souls: new Set() });
+        if (!map.has(key)) map.set(key, { name, burns: 0, souls: new Set(), latest: 0 });
         const e = map.get(key);
         e.burns++;
         if (r.handle) e.souls.add(String(r.handle).toLowerCase());
+        e.latest = Math.max(e.latest, Number(r.ts) || 0);
       }
-      const all = [...map.values()].sort((a, b) => b.burns - a.burns || b.souls.size - a.souls.size);
-      const wrap = $("#ruggers"), more = $("#ruggersMore");
-      if (!all.length) { wrap.innerHTML = `<div class="exp__empty" style="padding:24px">No collections burned yet.</div>`; if (more) more.hidden = true; return; }
-
-      let shown = 6;
-      function paint() {
-        wrap.innerHTML = all.slice(0, shown).map((e, i) => {
-          const init = esc((e.name || "?").replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase() || "?");
-          const rank = i === 0 ? `<span class="rugger__rank">#1</span>` : "";
-          return `<figure class="rugger" data-contract="${esc(e.contract)}" data-chain="${esc(e.chainId)}">
-            ${rank}
-            <div class="rugger__pfp" style="background:${avatarColor(e.name)}">${init}</div>
-            <figcaption class="rugger__name" title="${esc(e.name)}">${esc(e.name)}</figcaption>
-            <div class="rugger__count"><b>${e.burns}</b> burned · ${e.souls.size} rugged</div>
-          </figure>`;
-        }).join("");
-        if (more) { more.hidden = shown >= all.length; more.textContent = `Show more fuckers (${all.length - shown})`; }
-        loadPfps();
-      }
-      function loadPfps() {
-        wrap.querySelectorAll(".rugger").forEach(fig => {
-          if (fig._done) return; fig._done = true;
-          const c = fig.getAttribute("data-contract"), ch = fig.getAttribute("data-chain");
-          if (!/^0x[0-9a-fA-F]{40}$/.test(c || "")) return;
-          fetch(`/api/collection-image?contract=${c}&chainId=${ch}`).then(r => r.ok ? r.json() : null).then(d => {
-            if (d && d.image) {
-              const ph = fig.querySelector(".rugger__pfp");
-              const img = new Image(); img.className = "rugger__pfp"; img.alt = ""; img.referrerPolicy = "no-referrer";
-              img.onload = () => ph.replaceWith(img);
-              img.src = d.image;
-            }
-          }).catch(() => {});
-        });
-      }
-      if (more) more.onclick = () => { shown = all.length; paint(); };
-      paint();
+      const top = [...map.values()].sort((a, b) => b.burns - a.burns || b.souls.size - a.souls.size).slice(0, 8);
+      const tb = $("#topRows");
+      if (!top.length) { tb.innerHTML = `<tr><td colspan="5" class="exp__empty">No collections burned yet.</td></tr>`; return; }
+      tb.innerHTML = top.map((e, i) => {
+        const rank = i === 0 ? `<b style="color:var(--rug)">#1</b>` : `#${i + 1}`;
+        return `<tr>
+          <td>${rank}</td>
+          <td><span class="exp__coll">${esc(e.name)}</span></td>
+          <td><b>${e.burns}</b></td>
+          <td>${e.souls.size}</td>
+          <td class="exp__age">${timeAgo(e.latest)}</td>
+        </tr>`;
+      }).join("");
     }
 
     function render(rows, count) {
