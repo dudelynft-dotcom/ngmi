@@ -31,7 +31,9 @@ if (!X_CONFIGURED) {
   );
 }
 
-const AUTHORIZE_URL = "https://twitter.com/i/oauth2/authorize";
+// MUST be x.com (where the X login session lives). twitter.com's authorize page
+// can't see the x.com login cookie, so fresh browsers loop on "log in to X" forever.
+const AUTHORIZE_URL = "https://x.com/i/oauth2/authorize";
 const TOKEN_URL = "https://api.twitter.com/2/oauth2/token";
 const ME_URL = "https://api.twitter.com/2/users/me?user.fields=profile_image_url,username,name";
 
