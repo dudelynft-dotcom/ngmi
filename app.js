@@ -247,7 +247,8 @@ const FAQ = [
   ["Can I get a refund?", "lol. lmao, even."],
 ];
 function initFaq() {
-  $("#faqList").innerHTML = FAQ.map(([q, a]) => `
+  const list = $("#faqList"); if (!list) return;   // FAQ moved to its own page
+  list.innerHTML = FAQ.map(([q, a]) => `
     <div class="faq__item">
       <button class="faq__q">${q} <span>+</span></button>
       <div class="faq__a"><p>${a}</p></div>

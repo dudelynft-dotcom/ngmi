@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=43" />
+  <link rel="stylesheet" href="styles.css?v=44" />
   <style>
     .admin { max-width: 1200px; margin: 0 auto; padding: 28px clamp(16px,4vw,40px) 80px; }
     .admin h1 { font-family: var(--poster); font-weight: 400; font-size: 40px; margin: 0 0 6px; }
@@ -93,13 +93,18 @@
     async function load() {
       if (!token) { $("#msg").textContent = "Enter your admin token and click Load."; return; }
       $("#msg").textContent = "Loading…";
-      try {
-        const r = await fetch("/api/admin/list?token=" + encodeURIComponent(token));
-        if (r.status === 401) { $("#msg").textContent = "Bad or missing admin token (check ADMIN_TOKEN in .env)."; render([]); return; }
-        const d = await r.json();
-        render(d.rows || []);
-        $("#msg").textContent = "";
-      } catch (e) { $("#msg").textContent = "Error: " + e.message; }
+      for (let i = 0; i < 4; i++) {
+        try {
+          const r = await fetch("/api/admin/list?token=" + encodeURIComponent(token), { cache: "no-store" });
+          if (r.status === 401) { $("#msg").textContent = "Bad or missing admin token (check ADMIN_TOKEN in .env)."; $("#stats").innerHTML = ""; $("#tableWrap").innerHTML = ""; return; }
+          const d = await r.json().catch(() => ({}));
+          if (r.status === 503 || d.warming) { $("#msg").textContent = "Database waking up… retrying."; await new Promise(s => setTimeout(s, 1500)); continue; }
+          render(d.rows || []);
+          $("#msg").textContent = "";
+          return;
+        } catch (e) { $("#msg").textContent = "Error: " + e.message; await new Promise(s => setTimeout(s, 1200)); }
+      }
+      $("#msg").textContent = "Database is slow to wake - hit ↻ Refresh in a few seconds (your data is safe).";
     }
 
     async function decide(spot, decision) {

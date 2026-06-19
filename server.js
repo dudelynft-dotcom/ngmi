@@ -695,14 +695,20 @@ app.post("/api/whitelist", async (req, res) => {
 /* --- 4b. Admin: review + approve pending applications ---------- */
 app.get("/api/admin/list", async (req, res) => {
   if (!adminOk(req)) return res.status(401).json({ ok: false, error: "Bad or missing admin token." });
-  if (neonUp()) {
+  res.set("Cache-Control", "no-store");
+  if (sql) {
+    // Neon is the source of truth - retry through a cold/warming DB rather than returning a
+    // false-empty list that looks like "all applications vanished".
     try {
-      const rows = await tsql`
+      const rows = await neonRead(() => sql`
         SELECT spot, handle, name, lost_usd, cope, nft_ath, approval, status, burn_count, burns, chain_id, shame_tweet,
                extract(epoch from created_at)::bigint AS ts
-        FROM whitelist ORDER BY (status='pending') DESC, created_at DESC LIMIT 500`;
+        FROM whitelist ORDER BY (status='pending') DESC, created_at DESC LIMIT 500`);
       return res.json({ ok: true, rows });
-    } catch (e) { neonFailed(e); }
+    } catch (e) {
+      neonFailed(e);
+      return res.status(503).json({ ok: false, warming: true, error: "Database is waking up - retry in a moment." });
+    }
   }
   const rows = readWhitelist().map(fileEntryToApi)
     .sort((a, b) => (a.status === "pending" ? 0 : 1) - (b.status === "pending" ? 0 : 1));
