@@ -327,7 +327,6 @@ app.get("/api/whitelist/count", async (req, res) => {
 
 /* --- 3d. Public ruglist: every NFT burned, by whom -------------- */
 app.get("/api/ruglist", async (req, res) => {
-  res.set("Cache-Control", "no-store");
   if (neonUp()) {
     try {
       const rows = await neonRead(() => sql`
@@ -342,9 +341,12 @@ app.get("/api/ruglist", async (req, res) => {
         ORDER BY updated_at DESC
         LIMIT 500`);
       const visible = rows.filter((r) => !isHidden(r.handle));
+      // Edge-cache so the page is instant for everyone after the first hit; new burns appear within ~20s.
+      res.set("Cache-Control", "public, max-age=10, s-maxage=20, stale-while-revalidate=120");
       return res.json({ ok: true, count: visible.length, rows: visible });
     } catch (e) { neonFailed(e); }
   }
+  res.set("Cache-Control", "no-store");
   const list = readWhitelist();
   if (sql && list.length === 0) return res.status(503).json({ ok: false, warming: true, error: "Database warming up." });
   const rows = [];

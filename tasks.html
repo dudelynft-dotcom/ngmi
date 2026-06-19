@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=45" />
+  <link rel="stylesheet" href="styles.css?v=46" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0b'/><text x='50' y='72' font-size='62' font-family='monospace' font-weight='bold' fill='%23c6f24e' text-anchor='middle'>N</text></svg>" />
   <style>
     .pts { max-width: 880px; margin: 0 auto; padding: 24px clamp(16px,4vw,40px) 90px; }
@@ -97,7 +97,7 @@
         if (done) btn = `<button class="btn task__btn is-done" disabled>Claimed ✓</button>`;
         else if (!authed) btn = `<a class="btn btn--ghost task__btn" href="/auth/x/login">Login to farm</a>`;
         else if (t.auto) btn = `<a class="btn btn--accent task__btn" href="${esc(t.url || "/apply")}">Go →</a>`;
-        else btn = `<button class="btn btn--accent task__btn" data-id="${esc(t.id)}" data-url="${esc(t.url || "")}">Do it +${t.points}</button>`;
+        else btn = `<button class="btn btn--accent task__btn" data-id="${esc(t.id)}" data-url="${esc(t.url || "")}" data-pts="${t.points}">Do it +${t.points}</button>`;
         return `<div class="task ${done ? "done" : ""}">
           <div class="task__main">
             <div class="task__label">${esc(t.label)}</div>
@@ -106,19 +106,43 @@
           <div class="task__right"><span class="task__pts">+${t.points}</span>${btn}</div>
         </div>`;
       }).join("");
-      $$(".task__btn[data-id]").forEach(b => b.onclick = () => claim(b));
+      // Do it -> opens the action, auto-verifies for 10s, then reveals Claim.
+      $$(".task__btn[data-id]").forEach(b => b.onclick = () => {
+        if (b.dataset.ready === "1") claim(b); else startTask(b);
+      });
+    }
+
+    function startTask(btn) {
+      const url = btn.getAttribute("data-url");
+      if (url) window.open(url, "_blank", "noopener");
+      btn.disabled = true;
+      btn.classList.remove("btn--accent");
+      let left = 10;
+      btn.textContent = "Verifying… " + left + "s";
+      const iv = setInterval(() => {
+        left--;
+        if (left <= 0) {
+          clearInterval(iv);
+          btn.disabled = false;
+          btn.classList.add("btn--accent");
+          btn.dataset.ready = "1";
+          btn.textContent = "Claim +" + btn.getAttribute("data-pts");
+        } else {
+          btn.textContent = "Verifying… " + left + "s";
+        }
+      }, 1000);
     }
 
     async function claim(btn) {
-      const id = btn.getAttribute("data-id"), url = btn.getAttribute("data-url");
-      if (url) window.open(url, "_blank", "noopener");
-      btn.disabled = true; btn.textContent = "Claiming...";
+      const id = btn.getAttribute("data-id");
+      const pts = btn.getAttribute("data-pts");
+      btn.disabled = true; btn.textContent = "Claiming…";
       try {
         const r = await fetch("/api/points/claim", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ taskId: id }) });
         const d = await r.json();
         if (d.ok) { $("#ptsBalance").textContent = Number(d.balance || 0).toLocaleString(); load(); }
-        else { btn.disabled = false; btn.textContent = "Do it"; }
-      } catch { btn.disabled = false; btn.textContent = "Do it"; }
+        else { btn.disabled = false; btn.dataset.ready = "1"; btn.textContent = "Claim +" + pts; }
+      } catch { btn.disabled = false; btn.dataset.ready = "1"; btn.textContent = "Claim +" + pts; }
     }
 
     async function showUser() {
