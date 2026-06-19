@@ -83,10 +83,10 @@
     </div>
 
     <div class="exp__panel" style="margin-bottom:18px">
-      <div class="exp__panel-head"><span>Top ruggers</span><span class="pulse" style="color:var(--ink-soft)">by bags burned</span></div>
+      <div class="exp__panel-head"><span>Top ruggers</span><span class="pulse" style="color:var(--ink-soft)">most-burned collections</span></div>
       <div class="exp__scroll">
         <table class="exp__table" style="min-width:560px">
-          <thead><tr><th>Rank</th><th>Degen</th><th>Bags burned</th><th>Collections</th><th>Last burn</th></tr></thead>
+          <thead><tr><th>Rank</th><th>Collection</th><th>Times burned</th><th>Souls rugged</th><th>Last burn</th></tr></thead>
           <tbody id="topRows"><tr><td colspan="5" class="exp__empty">—</td></tr></tbody>
         </table>
       </div>
@@ -135,27 +135,28 @@
       }
     }
 
+    // Top ruggers = the COLLECTIONS that got burned the most (the projects that rugged the most people).
     function renderTop(rows) {
       const map = new Map();
       for (const r of rows) {
-        const h = r.handle || "anon";
-        if (!map.has(h)) map.set(h, { handle: h, burns: 0, colls: new Set(), latest: 0 });
-        const e = map.get(h);
+        const name = r.collection || "Unknown";
+        const key = name.toLowerCase();
+        if (!map.has(key)) map.set(key, { name, burns: 0, souls: new Set(), latest: 0 });
+        const e = map.get(key);
         e.burns++;
-        if (r.collection) e.colls.add(String(r.collection).toLowerCase());
+        if (r.handle) e.souls.add(String(r.handle).toLowerCase());
         e.latest = Math.max(e.latest, Number(r.ts) || 0);
       }
-      const top = [...map.values()].sort((a, b) => b.burns - a.burns || b.colls.size - a.colls.size).slice(0, 5);
+      const top = [...map.values()].sort((a, b) => b.burns - a.burns || b.souls.size - a.souls.size).slice(0, 5);
       const tb = $("#topRows");
-      if (!top.length) { tb.innerHTML = `<tr><td colspan="5" class="exp__empty">No ruggers yet.</td></tr>`; return; }
+      if (!top.length) { tb.innerHTML = `<tr><td colspan="5" class="exp__empty">No collections burned yet.</td></tr>`; return; }
       tb.innerHTML = top.map((e, i) => {
-        const handle = esc(e.handle), xUser = handle.replace(/^@/, "");
         const rank = i === 0 ? `<b style="color:var(--rug)">#1</b>` : `#${i + 1}`;
         return `<tr>
           <td>${rank}</td>
-          <td><a class="exp__user" href="https://x.com/${xUser}" target="_blank" rel="noopener">${handle}</a></td>
+          <td><span class="exp__coll">${esc(e.name)}</span></td>
           <td><b>${e.burns}</b></td>
-          <td>${e.colls.size}</td>
+          <td>${e.souls.size}</td>
           <td class="exp__age">${timeAgo(e.latest)}</td>
         </tr>`;
       }).join("");
