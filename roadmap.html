@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NGMI - Roadmap</title>
+  <meta name="description" content="Not a roadmap. A forecast. Here is exactly how this ends for you, phase by phase." />
+  <meta property="og:title" content="NGMI - The Roadmap (a forecast)" />
+  <meta property="og:description" content="The sale isn't live and we already know how it ends for you. Phase by phase." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=40" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0b'/><text x='50' y='72' font-size='62' font-family='monospace' font-weight='bold' fill='%23c6f24e' text-anchor='middle'>N</text></svg>" />
+  <style>
+    .road2 { max-width: 940px; margin: 0 auto; padding: 26px clamp(16px,4vw,40px) 110px; }
+    .road2__kick { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--rug); font-weight: 700; }
+    .road2__title { font-family: var(--poster); font-weight: 400; font-size: clamp(46px,10vw,92px); line-height: .88; margin: 6px 0 14px; text-transform: uppercase; }
+    .road2__intro { color: var(--ink-soft); max-width: 660px; font-size: 16px; line-height: 1.55; margin: 0; }
+    .road2__intro b { color: var(--ink); }
+    .road2__intro .down { color: var(--rug); }
+
+    .phases { margin-top: 40px; }
+    .phase { position: relative; display: grid; grid-template-columns: 96px 1fr; gap: 22px; padding: 24px 0; border-top: 2px solid var(--ink); }
+    .phase:last-child { border-bottom: 2px solid var(--ink); }
+    .phase__num { font-family: var(--poster); font-weight: 400; font-size: 34px; line-height: 1; color: var(--ink); }
+    .phase--now .phase__num { color: var(--rug); }
+    .phase__head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+    .phase__title { font-family: var(--font); font-weight: 900; font-size: clamp(19px,3.4vw,27px); line-height: 1.05; }
+    .phase__desc { color: var(--ink-soft); font-size: 15px; max-width: 640px; line-height: 1.6; margin: 0; }
+    .phase__desc b { color: var(--ink); }
+
+    .ppill { font-family: var(--mono); font-weight: 700; font-size: 10px; letter-spacing: .05em; text-transform: uppercase; padding: 3px 9px; border: 2px solid var(--ink); border-radius: 20px; white-space: nowrap; }
+    .ppill--done { background: var(--acid); color: var(--acid-ink); }
+    .ppill--live { background: var(--rug); color: #fff; display: inline-flex; align-items: center; gap: 6px; }
+    .ppill--live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 0 rgba(255,255,255,.7); animation: ppulse 1.5s infinite; }
+    .ppill--soon { background: var(--paper-2); color: var(--ink); }
+    .ppill--rug { background: var(--ink); color: var(--paper); }
+    @keyframes ppulse { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,.7); } 70% { box-shadow: 0 0 0 7px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
+
+    .road2__foot { margin-top: 34px; padding: 22px; border: 3px solid var(--ink); background: var(--ink); color: var(--paper); box-shadow: 8px 8px 0 var(--rug); }
+    .road2__foot b { color: var(--acid); }
+    .road2__foot p { margin: 0; font-size: 15px; line-height: 1.6; }
+    .road2__cta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+    @media (max-width: 560px) { .phase { grid-template-columns: 1fr; gap: 8px; } .phase__num { font-size: 26px; } }
+  </style>
+</head>
+<body>
+  <div class="ticker" aria-hidden="true"><div class="ticker__track" style="padding:9px 20px;font-family:var(--mono);font-size:13px">THE PLAN · not a roadmap, a forecast · we already know how it ends · THE PLAN ·</div></div>
+
+  <header class="nav">
+    <a class="nav__brand" href="/"><span class="nav__mark">NG</span><span class="nav__name">MI</span></a>
+    <nav class="nav__links">
+      <a href="/manifesto">Manifesto</a>
+      <a href="/collection">Collection</a>
+      <a href="/ruglist">Ruglist</a>
+      <a href="/tasks">Farm</a>
+      <a href="/roadmap">Roadmap</a>
+      <a href="/faq">FAQ</a>
+    </nav>
+    <div class="nav__right">
+      <span class="nav__user" id="navUser"></span>
+    </div>
+    <button class="nav__toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </header>
+
+  <main class="road2">
+    <span class="road2__kick">// THE PLAN</span>
+    <h1 class="road2__title">Roadmap</h1>
+    <p class="road2__intro">Every other project sells you a roadmap. We're giving you a <b>forecast</b>.
+      The sale isn't even live yet and we already know, with total confidence, exactly how this ends for
+      you. <span class="down">Nine phases. You make it to roughly phase four feeling great.</span></p>
+
+    <div class="phases">
+      <div class="phase">
+        <div class="phase__num">00</div>
+        <div>
+          <div class="phase__head"><h2 class="phase__title">You showed up</h2><span class="ppill ppill--done">Done</span></div>
+          <p class="phase__desc">We told you, in writing, that you are the exit liquidity. You read it. You laughed. You stayed. That was the entire test, and you failed it beautifully.</p>
+        </div>
+      </div>
+
+      <div class="phase phase--now">
+        <div class="phase__num">01</div>
+        <div>
+          <div class="phase__head"><h2 class="phase__title">Initiation: the whitelist</h2><span class="ppill ppill--live">Live now</span></div>
+          <p class="phase__desc">To get whitelisted you publicly burn an NFT that <b>already rugged you</b> - live, on stream, ideally naked - to prove you're ready to be rugged again. No NFT left to burn? Farm worthless NGMI Points instead. You're probably doing that right now.</p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase__num">02</div>
+        <div>
+          <div class="phase__head"><h2 class="phase__title">The free-mint bait</h2><span class="ppill ppill--rug">Inevitable</span></div>
+          <p class="phase__desc">We scream <b>FREE MINT</b> in big lime letters until the hype peaks. Then, five minutes before mint, we announce it's <b>$69</b>. You will screenshot the "free" promise. You will still pay the $69.</p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase__num">03</div>
+        <div>
+          <div class="phase__head"><h2 class="phase__title">Mint day</h2><span class="ppill ppill--soon">Not live yet</span></div>
+          <p class="phase__desc">The sale you keep refreshing for goes live. For roughly 40 minutes you are a genius. You tell the group chat. You change your pfp. Enjoy it - it is, statistically, the peak of your crypto career.</p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase__num">04</div>
+        <div>
+          <div class="phase__head"><h2 class="phase__title">We sell</h2><span class="ppill ppill--rug">Scheduled</span></div>
+          <p class="phase__desc">The instant it mints, this happens. Look at the chart. Yes. That was us. There was no team allocation to dump because we promised none - so we dumped <b>yours</b> instead. Thanks ser.</p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase__num">05</div>
+        <div>
+          <div class="phase__head"><h2 class="phase__title">The cope era</h2><span class="ppill ppill--rug">Guaranteed</span></div>
+          <p class="phase__desc">"Reveal soon." "The art is still good." "Floor is just consolidating." "Devs will be back." They will not. You will hold to zero out of spite and call it conviction.</p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase__num">06</div>
+        <div>
+          <div class="phase__head"><h2 class="phase__title">The points rug</h2><span class="ppill ppill--rug">Soon™</span></div>
+          <p class="phase__desc">Remember the NGMI Points you farmed like a raccoon at a dumpster? Snapshot taken. The token is "coming." The allocation, however, is coming to <b>us</b>. You farmed your own exit liquidity. Genuinely poetic.</p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase__num">07</div>
+        <div>
+          <div class="phase__head"><h2 class="phase__title">Acceptance</h2><span class="ppill ppill--rug">Certain</span></div>
+          <p class="phase__desc">You stop checking the floor. You make peace with it. You tell newcomers "I was early." You were not early. You were the liquidity. We both know it.</p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase__num">08</div>
+        <div>
+          <div class="phase__head"><h2 class="phase__title">The next project</h2><span class="ppill ppill--rug">Written in stone</span></div>
+          <p class="phase__desc">Same frog. New rope. We announce "NGMI 2: this time it's different." It will not be different. You will mint it on day one with the rent money. See you in the trenches, ser.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="road2__foot">
+      <p>That's the whole roadmap. No utility milestones, no metaverse, no staking - just the truth on a
+        timeline. <b>The only honest project in the space, and it's the one openly planning to rug you.</b></p>
+      <div class="road2__cta">
+        <a class="btn btn--accent" href="/apply">Claim your whitelist spot →</a>
+        <a class="btn btn--ghost" href="/tasks">Farm points instead</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+    (async () => {
+      try {
+        const r = await fetch("/auth/me", { headers: { Accept: "application/json" } });
+        if (!r.ok) return;
+        const u = (await r.json()).user; if (!u) return;
+        const el = $("#navUser"); if (!el) return;
+        const txt = "@" + u.username;
+        const btn = document.createElement("button");
+        btn.type = "button"; btn.className = "nav__userbtn"; btn.title = "Click to copy"; btn.textContent = txt;
+        btn.onclick = () => { (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => { btn.classList.add("copied"); btn.textContent = "copied ✓"; setTimeout(() => { btn.classList.remove("copied"); btn.textContent = txt; }, 1200); }).catch(() => {}); };
+        el.innerHTML = ""; el.appendChild(btn);
+      } catch {}
+    })();
+    (function () {
+      const nav = document.querySelector(".nav"), tog = $("#navToggle");
+      if (!nav || !tog) return;
+      tog.onclick = () => { const o = nav.classList.toggle("nav--open"); tog.setAttribute("aria-expanded", o ? "true" : "false"); };
+      nav.querySelectorAll(".nav__links a").forEach(a => a.addEventListener("click", () => nav.classList.remove("nav--open")));
+    })();
+  </script>
+</body>
+</html>

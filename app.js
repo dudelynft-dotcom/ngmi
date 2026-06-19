@@ -1278,7 +1278,7 @@ function initCountUp() {
 /* ----------------------------- CLEAN-URL ROUTER -----------------------------
    Homepage sections get real paths (/manifesto, /collection, ...) instead of #hash.
    In-page clicks scroll + pushState; direct loads / back-button jump to the section. */
-const ROUTES = { "/manifesto": "manifesto", "/collection": "collection", "/receipts": "receipts", "/roadmap": "roadmap", "/faq": "faq", "/whitelist": "wl" };
+const ROUTES = { "/manifesto": "manifesto", "/collection": "collection", "/receipts": "receipts", "/faq": "faq", "/whitelist": "wl" };
 function scrollToRoute(path, smooth) {
   const id = ROUTES[path];
   const el = id && document.getElementById(id);
