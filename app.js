@@ -201,7 +201,7 @@ function initGallery() {
   let html = "";
   for (let n = 1; n <= GALLERY_COUNT; n++) {
     const id = String(((n * 743) % 9900) + 100).padStart(4, "0");
-    html += `<figure class="gcard"><img src="${galleryImg(n)}" loading="lazy" alt="NGMI Pepe #${id}" /><figcaption>EXIT #${id}<span class="down"> · not minted</span></figcaption></figure>`;
+    html += `<figure class="gcard"><img src="${galleryImg(n)}" loading="lazy" alt="NGMI Pepe #${id}" /><figcaption>NGMI #${id}<span class="down"> · not minted</span></figcaption></figure>`;
   }
   wrap.innerHTML = html;
 }
@@ -454,7 +454,7 @@ const athToUsdC = (t) => {
   return /eth|ether|Ξ|ξ/.test(str) ? num * ETH_USD_C : num;
 };
 const tierPointsC = (a) => (a >= 50 ? 50 : a >= 30 ? 34 : a > 0 ? 20 : 10);
-const clientApproval = (count, athText) => (count <= 0 ? 0 : Math.min(100, tierPointsC(athToUsdC(athText)) * count));
+const clientApproval = (count, athText) => (count <= 0 ? 0 : Math.max(10, Math.min(99, tierPointsC(athToUsdC(athText)) * count)));
 const CHAIN_NAMES = {
   "0x1": "Ethereum", "0x89": "Polygon", "0x2105": "Base", "0xa": "Optimism", "0xa4b1": "Arbitrum",
   "0xaa36a7": "Sepolia", "0x14a34": "Base Sepolia", "0x66eee": "Arbitrum Sepolia",
@@ -655,7 +655,8 @@ function renderApproval() {
   const box = $("#approvalBox"); if (!box) return;
   box.hidden = false;
   const manual = !hasWallet() || burnState.mode === "manual";
-  const count = manual ? 1 : burnState.selected.length;
+  const liveBags = manual ? 1 : burnState.selected.length;
+  const count = (WL.priorBurns ? WL.priorBurns.length : 0) + liveBags;  // prior burns add up too
   const athText = ($("#bAth") && $("#bAth").value) || "";
   const athUsd = athToUsdC(athText);
   const pct = clientApproval(count, athText);
@@ -664,10 +665,10 @@ function renderApproval() {
   $("#approvalPct").textContent = pct + "%";
   const fill = $("#approvalFill");
   fill.style.width = pct + "%";
-  fill.className = "approval__fill" + (pct >= 100 ? " hot" : pct >= 50 ? " warm" : "");
+  fill.className = "approval__fill" + (pct >= 85 ? " hot" : pct >= 50 ? " warm" : "");
 
   let note;
-  if (!manual && count === 0) {
+  if (!manual && liveBags === 0) {
     note = "Select the bags you're willing to martyr. Higher ATH + more bags = stronger case.";
   } else if (athUsd === 0) {
     note = `No ATH given, so your case is weak (${pct}%). Every application is hand-reviewed by an admin anyway. Add an ATH ($50+ is best) to strengthen it.`;

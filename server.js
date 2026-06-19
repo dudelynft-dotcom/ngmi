@@ -139,7 +139,8 @@ function tierPoints(athUsd) {
 }
 function scoreApplication(burnCount, athUsd) {
   if (burnCount <= 0) return 0;
-  return Math.min(100, tierPoints(athUsd) * burnCount);
+  // Never 100% - the best an applicant can compute is 99%; an admin still approves by hand.
+  return Math.max(10, Math.min(99, tierPoints(athUsd) * burnCount));
 }
 
 const isTweetUrl = (u) => /^https?:\/\/(www\.)?(twitter|x)\.com\/[A-Za-z0-9_]{1,15}\/status\/\d+/i.test(String(u || "").trim());
