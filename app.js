@@ -193,7 +193,7 @@ const STATUS = ["still coping", "financially deceased", "down bad", "in the tren
 let exhibitSeed = 420;
 
 /* ----------------------------- COLLECTION GALLERY (real art) ----------------------------- */
-const GALLERY_COUNT = 20;
+const GALLERY_COUNT = 19;
 const galleryImg = (n) => `/assets/gallery/${String(n).padStart(2, "0")}.png`;
 
 function initGallery() {
