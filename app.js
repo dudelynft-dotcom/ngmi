@@ -196,6 +196,7 @@ let exhibitSeed = 420;
 const GALLERY_COUNT = 19;
 const galleryImg = (n) => `/assets/gallery/${String(n).padStart(2, "0")}.png`;
 
+const GAL_PAGE = 6;   // how many to reveal per tap on mobile
 function initGallery() {
   const wrap = $("#gallery"); if (!wrap) return;
   let html = "";
@@ -204,6 +205,27 @@ function initGallery() {
     html += `<figure class="gcard"><img src="${galleryImg(n)}" loading="lazy" alt="NGMI Pepe #${id}" /><figcaption>NGMI #${id}<span class="down"> · not minted</span></figcaption></figure>`;
   }
   wrap.innerHTML = html;
+
+  // Mobile: show a few + a "Show more" button so the grid doesn't eat the whole screen.
+  const more = $("#galMore");
+  const figs = Array.from(wrap.children);
+  const isMobile = () => window.matchMedia("(max-width: 680px)").matches;
+  let shown = isMobile() ? GAL_PAGE : figs.length;
+  function apply() {
+    if (!isMobile()) { figs.forEach(f => (f.style.display = "")); if (more) more.hidden = true; return; }
+    figs.forEach((f, i) => (f.style.display = i < shown ? "" : "none"));
+    if (more) {
+      const left = figs.length - shown;
+      more.hidden = left <= 0;
+      more.textContent = left > 0 ? `Show more + (${left} left)` : "";
+    }
+  }
+  if (more) more.onclick = () => { shown = Math.min(figs.length, shown + GAL_PAGE); apply(); };
+  let t; window.addEventListener("resize", () => {
+    clearTimeout(t);
+    t = setTimeout(() => { if (!isMobile()) shown = figs.length; else if (shown >= figs.length) shown = GAL_PAGE; apply(); }, 150);
+  });
+  apply();
 }
 
 /* ----------------------------- HERO ART (real art) ----------------------------- */
