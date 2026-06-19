@@ -685,7 +685,7 @@ app.use(
 );
 
 /* --- 5b. Clean-URL homepage sections -> serve the homepage ------ */
-app.get(["/manifesto", "/collection", "/receipts", "/faq", "/whitelist"], (req, res) => {
+app.get(["/whitelist"], (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   res.sendFile(path.join(__dirname, "index.html"));
 });

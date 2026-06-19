@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NGMI - The Manifesto</title>
+  <meta name="description" content="Fourteen articles of brutal truth about you, your bags, and why you're going to mint this anyway. The most honest document in the space." />
+  <meta property="og:title" content="NGMI - The Manifesto" />
+  <meta property="og:description" content="You are the exit liquidity. Here are the fourteen reasons, in writing. Read it, beggar." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=41" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0b'/><text x='50' y='72' font-size='62' font-family='monospace' font-weight='bold' fill='%23c6f24e' text-anchor='middle'>N</text></svg>" />
+  <style>
+    .mani { max-width: 900px; margin: 0 auto; padding: 26px clamp(16px,4vw,40px) 110px; }
+    .mani__kick { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--rug); font-weight: 700; }
+    .mani__title { font-family: var(--poster); font-weight: 400; font-size: clamp(46px,11vw,108px); line-height: .84; margin: 6px 0 16px; text-transform: uppercase; }
+    .mani__intro { color: var(--ink-soft); max-width: 680px; font-size: 16.5px; line-height: 1.62; margin: 0 0 6px; }
+    .mani__intro b { color: var(--ink); }
+    .mani__intro .down { color: var(--rug); font-weight: 700; }
+
+    .arts { margin-top: 42px; }
+    .art { display: grid; grid-template-columns: 92px 1fr; gap: 22px; padding: 32px 0; border-top: 2px solid var(--ink); }
+    .art:last-child { border-bottom: 2px solid var(--ink); }
+    .art__n { font-family: var(--poster); font-weight: 400; font-size: 44px; line-height: .85; color: var(--ink); }
+    .art--red .art__n { color: var(--rug); }
+    .art__h { font-family: var(--font); font-weight: 900; font-size: clamp(21px,3.8vw,32px); line-height: 1.04; margin: 0 0 12px; letter-spacing: -.01em; }
+    .art__b p { color: var(--ink-soft); font-size: 15.5px; line-height: 1.66; margin: 0 0 11px; max-width: 650px; }
+    .art__b p:last-child { margin-bottom: 0; }
+    .art__b b { color: var(--ink); }
+    .art__b .punch { color: var(--rug); font-weight: 700; }
+
+    .mani__terms { margin-top: 38px; padding: 24px; border: 3px solid var(--ink); background: var(--paper-2); }
+    .mani__terms h3 { font-family: var(--font); font-weight: 900; font-size: 18px; margin: 0 0 10px; text-transform: uppercase; }
+    .mani__terms p { font-family: var(--mono); font-size: 13px; line-height: 1.7; color: var(--ink-soft); margin: 0; }
+    .mani__terms b { color: var(--ink); }
+
+    .mani__foot { margin-top: 28px; padding: 24px; border: 3px solid var(--ink); background: var(--ink); color: var(--paper); box-shadow: 8px 8px 0 var(--rug); }
+    .mani__foot p { margin: 0 0 16px; font-size: 16px; line-height: 1.6; }
+    .mani__foot b { color: var(--acid); }
+    .mani__cta { display: flex; gap: 10px; flex-wrap: wrap; }
+    @media (max-width: 560px) { .art { grid-template-columns: 1fr; gap: 4px; } .art__n { font-size: 32px; } }
+  </style>
+</head>
+<body>
+  <div class="ticker" aria-hidden="true"><div class="ticker__track" style="padding:9px 20px;font-family:var(--mono);font-size:13px">THE WHITEPAPER · there is no paper · only the truth about you · THE WHITEPAPER ·</div></div>
+
+  <header class="nav">
+    <a class="nav__brand" href="/"><span class="nav__mark">NG</span><span class="nav__name">MI</span></a>
+    <nav class="nav__links">
+      <a href="/manifesto">Manifesto</a>
+      <a href="/collection">Collection</a>
+      <a href="/receipts">Receipts</a>
+      <a href="/ruglist">Ruglist</a>
+      <a href="/tasks">Farm</a>
+      <a href="/roadmap">Roadmap</a>
+      <a href="/faq">FAQ</a>
+    </nav>
+    <div class="nav__right">
+      <span class="nav__user" id="navUser"></span>
+    </div>
+    <button class="nav__toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </header>
+
+  <main class="mani">
+    <span class="mani__kick">// THE WHITEPAPER (THERE IS NO PAPER)</span>
+    <h1 class="mani__title">The<br />Manifesto</h1>
+    <p class="mani__intro">Fourteen articles. No tokenomics, no "vision," no lies. Just a mirror with the
+      lights turned all the way up. Every other project in this space wrote a document to make you feel
+      smart for buying. <b>We wrote one to make you feel seen for buying anyway.</b>
+      <span class="down">Read it slowly. It is about you.</span></p>
+
+    <div class="arts">
+      <div class="art art--red">
+        <div class="art__n">01</div>
+        <div>
+          <h2 class="art__h">You are the exit liquidity. It's not an insult. It's your job title.</h2>
+          <div class="art__b">
+            <p>Every market needs a bagholder of last resort - a final wallet where the money goes to die so
+              that everyone who got in before you can get out alive. For this collection, that wallet is
+              yours. We did not choose you. <b>You volunteered the instant you connected.</b></p>
+            <p class="punch">You are not the customer. You are the payment, the product, and the punchline.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="art">
+        <div class="art__n">02</div>
+        <div>
+          <h2 class="art__h">"Is it free?" Listen to yourself.</h2>
+          <div class="art__b">
+            <p>You found a 10,000-piece collection and the very first neuron to fire spelled the word
+              <b>free</b>. A grown adult, refreshing a mint page like a raccoon working a dumpster lid,
+              praying that tonight the trash is gourmet.</p>
+            <p>You are not an investor. You are a coupon with a seed phrase. We see you. We have always
+              seen you.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="art">
+        <div class="art__n">03</div>
+        <div>
+          <h2 class="art__h">You did this. Free mints made your JPEGs worthless.</h2>
+          <div class="art__b">
+            <p>Do not blame "the market." Do not blame "the bear." You and ten thousand identical gas
+              goblins demanded everything for zero, minted fifty copies of every dog-frog-cat derivative,
+              and dumped them all into the same dead pool.</p>
+            <p class="punch">You are not a victim of the rug economy. You are its unpaid labor force.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="art">
+        <div class="art__n">04</div>
+        <div>
+          <h2 class="art__h">You never bought art. You bought permission to lose money in public.</h2>
+          <div class="art__b">
+            <p>Nobody minted a frog because it was beautiful. You minted it because a stranger with an anime
+              profile picture implied that another, dumber stranger would pay more for it later. That is the
+              entire thesis. That is the whole religion.</p>
+            <p>It was never a gallery. It was a casino that let you keep the receipt and call it a
+              collection.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="art">
+        <div class="art__n">05</div>
+        <div>
+          <h2 class="art__h">There is no utility. There was never going to be utility.</h2>
+          <div class="art__b">
+            <p>"Wen utility" is the sound a portfolio makes as it flatlines. Utility is the bedtime story
+              founders read to holders so they hold through the dump. Staking, a game, a token, a metaverse
+              parcel - those are not products, they are sedatives.</p>
+            <p>We are not insecure enough to lie to you. <b>The utility is the feeling in your stomach right
+              now.</b> Treasure it. It is the only thing here that will hold value.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="art art--red">
+        <div class="art__n">06</div>
+        <div>
+          <h2 class="art__h">Your "conviction" is just poverty with good branding.</h2>
+          <div class="art__b">
+            <p>You did not hold through the dip because you believe. You held because the gas to sell cost
+              more than the bag was worth, and saying the loss out loud would make it real.</p>
+            <p>"Diamond hands" is what we call a man who cannot find a buyer. "Conviction" is what we call a
+              man who cannot afford the exit. <span class="punch">We renamed your worst trade and you
+              thanked us for it.</span></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="art">
+        <div class="art__n">07</div>
+        <div>
+          <h2 class="art__h">The roadmap is a hostage note you write to yourself.</h2>
+          <div class="art__b">
+            <p>Q1: vibes. Q2: more vibes. Q3: "big announcement." Q4: silence. A roadmap is not a plan, it is
+              a leash, and you are the one holding the other end - wrapped twice around your own neck. Every
+              milestone is a future excuse engineered to stop you from selling.</p>
+            <p>We respect you too much to draw you one. <b>Ours is four words long: we sell, you cope.</b></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="art">
+        <div class="art__n">08</div>
+        <div>
+          <h2 class="art__h">"Community" is a support group with an entry fee.</h2>
+          <div class="art__b">
+            <p>You did not find friends. You found other bagholders, and you all silently agreed to clap for
+              each other so that nobody has to be the first to say it out loud.</p>
+            <p>The Discord is not a movement. It is a waiting room with custom emojis. The morning "gm" is
+              not a greeting - it is a wellness check to confirm nobody jumped overnight.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="art">
+        <div class="art__n">09</div>
+        <div>
+          <h2 class="art__h">Anon is not a red flag. It's a lesson learned.</h2>
+          <div class="art__b">
+            <p>You ask why the team is anonymous as if you would not do the exact same thing in our shoes.
+              We watched the honest, doxxed founders get crucified, subpoenaed, and quote-tweeted into dust
+              for the crime of shipping.</p>
+            <p>We are frogs. No faces, no names, no forwarding address. This is not us hiding from you.
+              <b>This is us being smarter than the last guy who trusted you with his real name.</b></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="art">
+        <div class="art__n">10</div>
+        <div>
+          <h2 class="art__h">"This time is different" - the four most expensive words you know.</h2>
+          <div class="art__b">
+            <p>It is not different. It is never different. It is the same frog in a slightly different hat,
+              sold by the same energy in a different Discord, to the same you with a slightly emptier wallet.</p>
+            <p>The only variable that changes each cycle is the number of zeros between you and break-even.
+              "This time is different." "This time you're early." <span class="punch">You have said both
+              before, ser. To my face.</span></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="art">
+        <div class="art__n">11</div>
+        <div>
+          <h2 class="art__h">We removed the only variable that ever hurt you: hope.</h2>
+          <div class="art__b">
+            <p>Every other project sells you a maybe. Maybe it moons, maybe the team delivers, maybe you make
+              it. We took the maybe out back and shot it. There is no hopium here - only the certainty of the
+              rug and the strange, monastic peace that comes with it.</p>
+            <p><b>You cannot be betrayed by a project that promised, in writing, to betray you.</b> That makes
+              us, somehow, the single most trustworthy thing in the entire space.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="art art--red">
+        <div class="art__n">12</div>
+        <div>
+          <h2 class="art__h">You will mint anyway. We are counting on it.</h2>
+          <div class="art__b">
+            <p>You have now read most of a manifesto written by people openly explaining how they intend to
+              take your money - and instead of closing the tab, you kept scrolling, hunting for the mint
+              button.</p>
+            <p class="punch">That is not a flaw in our plan. That is the plan. We did not have to convince
+              you. We only had to wait.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="art">
+        <div class="art__n">13</div>
+        <div>
+          <h2 class="art__h">There is no greater fool. Look up.</h2>
+          <div class="art__b">
+            <p>The whole game runs on finding someone dumber than you to sell to. You have spent years
+              searching for that person across every chart, every Telegram, every Discord on earth.</p>
+            <p>We are genuinely sorry to be the ones to tell you where the search ends. Check the reflection
+              in your screen. <b>He's right there. He's been here the whole time.</b> Say gm to him.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="art art--red">
+        <div class="art__n">14</div>
+        <div>
+          <h2 class="art__h">ngmi is not an insult. It's a diagnosis, and you have it.</h2>
+          <div class="art__b">
+            <p>Not gonna make it. You read it as a warning about other people. It was never about other
+              people. We put it in the name, on the logo, in your face - and you still applied for the
+              whitelist.</p>
+            <p class="punch">The cope is over. The acceptance can begin. Burn the bag. Take the spot.
+              You're home now, ser.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mani__terms">
+      <h3>Terms you agreed to by scrolling this far</h3>
+      <p>By reaching the bottom of this document you accept, irrevocably and retroactively, that you are:
+        <b>(a)</b> the exit liquidity, <b>(b)</b> going to call it conviction, <b>(c)</b> going to blame
+        the bear, <b>(d)</b> going to mint the next one with the rent money, and <b>(e)</b> going to tell
+        people you were early. This agreement was binding before you arrived. It is parody. It is also,
+        somehow, the only contract in crypto that will be honored exactly as written.</p>
+    </div>
+
+    <div class="mani__foot">
+      <p>That's the manifesto. No vision statement, no "we're building," no roadmap to nowhere - just
+        the truth, notarized, before the rug. <b>The most honest document in the space was written by the
+        people planning to rug you.</b></p>
+      <div class="mani__cta">
+        <a class="btn btn--accent" href="/apply">Burn a bag, take the spot →</a>
+        <a class="btn btn--ghost" href="/roadmap">See how it ends</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+    (async () => {
+      try {
+        const r = await fetch("/auth/me", { headers: { Accept: "application/json" } });
+        if (!r.ok) return;
+        const u = (await r.json()).user; if (!u) return;
+        const el = $("#navUser"); if (!el) return;
+        const txt = "@" + u.username;
+        const btn = document.createElement("button");
+        btn.type = "button"; btn.className = "nav__userbtn"; btn.title = "Click to copy"; btn.textContent = txt;
+        btn.onclick = () => { (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => { btn.classList.add("copied"); btn.textContent = "copied ✓"; setTimeout(() => { btn.classList.remove("copied"); btn.textContent = txt; }, 1200); }).catch(() => {}); };
+        el.innerHTML = ""; el.appendChild(btn);
+      } catch {}
+    })();
+    (function () {
+      const nav = document.querySelector(".nav"), tog = $("#navToggle");
+      if (!nav || !tog) return;
+      tog.onclick = () => { const o = nav.classList.toggle("nav--open"); tog.setAttribute("aria-expanded", o ? "true" : "false"); };
+      nav.querySelectorAll(".nav__links a").forEach(a => a.addEventListener("click", () => nav.classList.remove("nav--open")));
+    })();
+  </script>
+</body>
+</html>

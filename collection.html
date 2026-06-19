@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NGMI - The Collection</title>
+  <meta name="description" content="A preview of the 10,000 pre-rugged Pepes. None minted yet. A look at what you'll be left holding." />
+  <meta property="og:title" content="NGMI - The Collection" />
+  <meta property="og:description" content="10,000 hand-rugged Pepes incoming. None minted. Stop refreshing." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=41" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0b'/><text x='50' y='72' font-size='62' font-family='monospace' font-weight='bold' fill='%23c6f24e' text-anchor='middle'>N</text></svg>" />
+  <style>
+    .sub { max-width: 1180px; margin: 0 auto; padding: 26px clamp(16px,4vw,40px) 110px; }
+    .sub__kick { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--rug); font-weight: 700; }
+    .sub__title { font-family: var(--poster); font-weight: 400; font-size: clamp(44px,9vw,84px); line-height: .88; margin: 6px 0 12px; text-transform: uppercase; }
+    .sub__lead { color: var(--ink-soft); max-width: 700px; font-size: 16px; line-height: 1.6; margin: 0 0 30px; }
+    .sub__lead b { color: var(--ink); }
+    .sub__stats { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 28px; }
+    .cstat { border: 2px solid var(--ink); border-radius: 4px; background: var(--paper-2); padding: 9px 16px; font-family: var(--mono); font-size: 13px; }
+    .cstat b { font-family: var(--poster); font-weight: 400; font-size: 22px; display: block; margin-top: 2px; }
+    .cstat .down { color: var(--rug); }
+  </style>
+</head>
+<body>
+  <div class="ticker" aria-hidden="true"><div class="ticker__track" style="padding:9px 20px;font-family:var(--mono);font-size:13px">THE COLLECTION · 10,000 pre-rugged Pepes · none minted yet · stop refreshing · THE COLLECTION ·</div></div>
+
+  <header class="nav">
+    <a class="nav__brand" href="/"><span class="nav__mark">NG</span><span class="nav__name">MI</span></a>
+    <nav class="nav__links">
+      <a href="/manifesto">Manifesto</a>
+      <a href="/collection">Collection</a>
+      <a href="/receipts">Receipts</a>
+      <a href="/ruglist">Ruglist</a>
+      <a href="/tasks">Farm</a>
+      <a href="/roadmap">Roadmap</a>
+      <a href="/faq">FAQ</a>
+    </nav>
+    <div class="nav__right">
+      <span class="nav__user" id="navUser"></span>
+    </div>
+    <button class="nav__toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </header>
+
+  <main class="sub">
+    <span class="sub__kick">// THE COLLECTION · PREVIEW</span>
+    <h1 class="sub__title">10,000 incoming. None minted yet.</h1>
+    <p class="sub__lead">A preview of exactly what you'll be left holding. Each one a hand-rugged Pepe,
+      freshly generated and already worthless in spirit. The full 10,000 drop on OpenSea once the
+      whitelist closes - if it ever does. <b>The mint is not live. Stop refreshing.</b></p>
+
+    <div class="sub__stats">
+      <div class="cstat">Supply<b>10,000</b></div>
+      <div class="cstat">Minted<b>0</b></div>
+      <div class="cstat">Mint price<b>maybe free?</b></div>
+      <div class="cstat">Projected floor<b class="down">-99%</b></div>
+    </div>
+
+    <div class="gallery" id="gallery"></div>
+    <button class="btn btn--ghost gallery__more" id="galMore" hidden>Show more +</button>
+    <p class="proof__fine">Preview samples from the 10,000. Mint is not live. These are not for sale yet. Calm down.</p>
+  </main>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const GALLERY_COUNT = 19, GAL_PAGE = 6;
+    const galleryImg = (n) => `/assets/gallery/${String(n).padStart(2, "0")}.png`;
+
+    (function initGallery() {
+      const wrap = $("#gallery"); if (!wrap) return;
+      let html = "";
+      for (let n = 1; n <= GALLERY_COUNT; n++) {
+        const id = String(((n * 743) % 9900) + 100).padStart(4, "0");
+        html += `<figure class="gcard"><img src="${galleryImg(n)}" loading="lazy" alt="NGMI Pepe #${id}" /><figcaption>NGMI #${id}<span class="down"> · not minted</span></figcaption></figure>`;
+      }
+      wrap.innerHTML = html;
+      const more = $("#galMore");
+      const figs = Array.from(wrap.children);
+      const isMobile = () => window.matchMedia("(max-width: 680px)").matches;
+      let shown = isMobile() ? GAL_PAGE : figs.length;
+      function apply() {
+        if (!isMobile()) { figs.forEach(f => (f.style.display = "")); if (more) more.hidden = true; return; }
+        figs.forEach((f, i) => (f.style.display = i < shown ? "" : "none"));
+        if (more) { const left = figs.length - shown; more.hidden = left <= 0; more.textContent = left > 0 ? `Show more + (${left} left)` : ""; }
+      }
+      if (more) more.onclick = () => { shown = Math.min(figs.length, shown + GAL_PAGE); apply(); };
+      let t; window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(() => { if (!isMobile()) shown = figs.length; else if (shown >= figs.length) shown = GAL_PAGE; apply(); }, 150); });
+      apply();
+    })();
+
+    (async () => {
+      try {
+        const r = await fetch("/auth/me", { headers: { Accept: "application/json" } });
+        if (!r.ok) return;
+        const u = (await r.json()).user; if (!u) return;
+        const el = $("#navUser"); if (!el) return;
+        const txt = "@" + u.username;
+        const btn = document.createElement("button");
+        btn.type = "button"; btn.className = "nav__userbtn"; btn.title = "Click to copy"; btn.textContent = txt;
+        btn.onclick = () => { (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => { btn.classList.add("copied"); btn.textContent = "copied ✓"; setTimeout(() => { btn.classList.remove("copied"); btn.textContent = txt; }, 1200); }).catch(() => {}); };
+        el.innerHTML = ""; el.appendChild(btn);
+      } catch {}
+    })();
+    (function () {
+      const nav = document.querySelector(".nav"), tog = $("#navToggle");
+      if (!nav || !tog) return;
+      tog.onclick = () => { const o = nav.classList.toggle("nav--open"); tog.setAttribute("aria-expanded", o ? "true" : "false"); };
+      nav.querySelectorAll(".nav__links a").forEach(a => a.addEventListener("click", () => nav.classList.remove("nav--open")));
+    })();
+  </script>
+</body>
+</html>

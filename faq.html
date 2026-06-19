@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NGMI - FAQ</title>
+  <meta name="description" content="The Cope Corner. Every question you have, answered by the people planning to rug you." />
+  <meta property="og:title" content="NGMI - FAQ (Cope Corner)" />
+  <meta property="og:description" content="Is this a rug? Yes. Wen utility? Never. Can I get a refund? lol. The honest FAQ." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=41" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0b'/><text x='50' y='72' font-size='62' font-family='monospace' font-weight='bold' fill='%23c6f24e' text-anchor='middle'>N</text></svg>" />
+  <style>
+    .sub { max-width: 820px; margin: 0 auto; padding: 26px clamp(16px,4vw,40px) 110px; }
+    .sub__kick { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--rug); font-weight: 700; }
+    .sub__title { font-family: var(--poster); font-weight: 400; font-size: clamp(46px,10vw,92px); line-height: .88; margin: 6px 0 12px; text-transform: uppercase; }
+    .sub__lead { color: var(--ink-soft); max-width: 640px; font-size: 16px; line-height: 1.6; margin: 0 0 32px; }
+
+    .qa { border: 2px solid var(--ink); border-radius: 6px; background: var(--paper-2); margin: 0 0 12px; overflow: hidden; }
+    .qa > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 18px 20px; font-family: var(--font); font-weight: 900; font-size: clamp(16px,2.6vw,20px); }
+    .qa > summary::-webkit-details-marker { display: none; }
+    .qa > summary::after { content: "+"; font-family: var(--mono); font-weight: 700; font-size: 24px; line-height: 1; color: var(--rug); flex: none; transition: transform .15s; }
+    .qa[open] > summary::after { content: "-"; }
+    .qa__a { padding: 0 20px 20px; color: var(--ink-soft); font-size: 15.5px; line-height: 1.65; margin: 0; }
+    .qa__a b { color: var(--ink); }
+
+    .faq__foot { margin-top: 30px; padding: 22px; border: 3px solid var(--ink); background: var(--ink); color: var(--paper); box-shadow: 8px 8px 0 var(--rug); }
+    .faq__foot p { margin: 0 0 16px; font-size: 15px; line-height: 1.6; }
+    .faq__foot b { color: var(--acid); }
+    .faq__cta { display: flex; gap: 10px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <div class="ticker" aria-hidden="true"><div class="ticker__track" style="padding:9px 20px;font-family:var(--mono);font-size:13px">COPE CORNER · is it a rug? yes. wen utility? never. refund? lol · COPE CORNER ·</div></div>
+
+  <header class="nav">
+    <a class="nav__brand" href="/"><span class="nav__mark">NG</span><span class="nav__name">MI</span></a>
+    <nav class="nav__links">
+      <a href="/manifesto">Manifesto</a>
+      <a href="/collection">Collection</a>
+      <a href="/receipts">Receipts</a>
+      <a href="/ruglist">Ruglist</a>
+      <a href="/tasks">Farm</a>
+      <a href="/roadmap">Roadmap</a>
+      <a href="/faq">FAQ</a>
+    </nav>
+    <div class="nav__right">
+      <span class="nav__user" id="navUser"></span>
+    </div>
+    <button class="nav__toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </header>
+
+  <main class="sub">
+    <span class="sub__kick">// COPE CORNER</span>
+    <h1 class="sub__title">FAQ</h1>
+    <p class="sub__lead">Every question you were going to ask, answered honestly by the people openly
+      planning to take your money. Tap one. They don't get less brutal.</p>
+
+    <details class="qa">
+      <summary>Is this a rug?</summary>
+      <p class="qa__a">Yes. We are legally and morally obligated to inform you: this is the concept. The product <b>is</b> the rug. You're not buying despite the rug, you're buying the rug. Congrats on your purchase.</p>
+    </details>
+
+    <details class="qa">
+      <summary>Wen utility?</summary>
+      <p class="qa__a">Never. Utility is for projects that are insecure about their art. Our art is a frog that lost everything. That <b>is</b> the utility. It's emotional support for your portfolio.</p>
+    </details>
+
+    <details class="qa">
+      <summary>Is the contract audited?</summary>
+      <p class="qa__a">Audited in the sense that we have personally, carefully reviewed exactly how it moves your money to us. It works flawlessly. No bugs. The taking-your-money function has 100% test coverage.</p>
+    </details>
+
+    <details class="qa">
+      <summary>Is the team doxxed?</summary>
+      <p class="qa__a">Absolutely not. We watched what happened to the doxxed devs. We're anon, we're frogs, and we're already in the Bahamas (allegedly).</p>
+    </details>
+
+    <details class="qa">
+      <summary>Is the team diverse?</summary>
+      <p class="qa__a">Extremely. We're not racist, we equal-opportunity rug. We hired an Indian dev to write the contract and a few Nigerian influencers to shill it - a fully global operation assembled to rug the community as perfectly as humanly possible. Diversity is our strength.</p>
+    </details>
+
+    <details class="qa">
+      <summary>How do I get whitelisted?</summary>
+      <p class="qa__a">Burn an NFT that already rugged you - live, on stream, ideally naked - to prove you're ready to be rugged again. No NFT left? Farm worthless NGMI Points instead. Both paths lead to precisely the same place.</p>
+    </details>
+
+    <details class="qa">
+      <summary>What's the floor going to be?</summary>
+      <p class="qa__a">Lower than it is right now, whenever "now" is. The floor is less of a price and more of a personal journey toward acceptance.</p>
+    </details>
+
+    <details class="qa">
+      <summary>Will there be a token?</summary>
+      <p class="qa__a">There will be points. The points will become a token. The token will become our exit. You will become a holder. Everyone in this story has a role, and yours has been cast since before you arrived.</p>
+    </details>
+
+    <details class="qa">
+      <summary>"I'm just here for the art."</summary>
+      <p class="qa__a">Of course you are. So is everyone at a casino, technically there for the architecture. The art is a frog who lost his house. You see yourself in him. That's not appreciation - that's a diagnosis.</p>
+    </details>
+
+    <details class="qa">
+      <summary>Why would I mint this?</summary>
+      <p class="qa__a">Honestly? We don't know either. But you've scrolled to the FAQ of a project that openly mocks you, so the data suggests you're going to. We'll see you up top at the mint button.</p>
+    </details>
+
+    <details class="qa">
+      <summary>Can I get a refund?</summary>
+      <p class="qa__a">lol. lmao, even.</p>
+    </details>
+
+    <div class="faq__foot">
+      <p>Still here. Still reading. Still not closing the tab. <b>That answers the only question that
+        actually mattered.</b></p>
+      <div class="faq__cta">
+        <a class="btn btn--accent" href="/apply">Fine. Whitelist me →</a>
+        <a class="btn btn--ghost" href="/manifesto">Read the manifesto</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+    (async () => {
+      try {
+        const r = await fetch("/auth/me", { headers: { Accept: "application/json" } });
+        if (!r.ok) return;
+        const u = (await r.json()).user; if (!u) return;
+        const el = $("#navUser"); if (!el) return;
+        const txt = "@" + u.username;
+        const btn = document.createElement("button");
+        btn.type = "button"; btn.className = "nav__userbtn"; btn.title = "Click to copy"; btn.textContent = txt;
+        btn.onclick = () => { (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => { btn.classList.add("copied"); btn.textContent = "copied ✓"; setTimeout(() => { btn.classList.remove("copied"); btn.textContent = txt; }, 1200); }).catch(() => {}); };
+        el.innerHTML = ""; el.appendChild(btn);
+      } catch {}
+    })();
+    (function () {
+      const nav = document.querySelector(".nav"), tog = $("#navToggle");
+      if (!nav || !tog) return;
+      tog.onclick = () => { const o = nav.classList.toggle("nav--open"); tog.setAttribute("aria-expanded", o ? "true" : "false"); };
+      nav.querySelectorAll(".nav__links a").forEach(a => a.addEventListener("click", () => nav.classList.remove("nav--open")));
+    })();
+  </script>
+</body>
+</html>
