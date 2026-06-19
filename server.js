@@ -273,19 +273,25 @@ app.get("/api/whitelist/me", async (req, res) => {
   res.json({ ok: true, application: fileEntryToApi(row) });
 });
 
+// Team/test handles hidden from the PUBLIC ruglist + counter (still in the DB; admin
+// and the users themselves still see them). Comma-separated env override.
+const HIDDEN_HANDLES = new Set((process.env.HIDE_HANDLES || "@w8bro,@Normexbt").split(",").map(s => s.trim().toLowerCase()).filter(Boolean));
+const isHidden = (handle) => HIDDEN_HANDLES.has(String(handle || "").trim().toLowerCase());
+const hiddenArr = () => [...HIDDEN_HANDLES];
+
 /* --- 3b. Public whitelist count (for the live counter) --------- */
 app.get("/api/whitelist/count", async (req, res) => {
   res.set("Cache-Control", "no-store");
   if (neonUp()) {
     try {
-      const rows = await neonRead(() => sql`SELECT count(*)::int AS n FROM whitelist`);
+      const rows = await neonRead(() => sql`SELECT count(*)::int AS n FROM whitelist WHERE lower(handle) <> ALL(${hiddenArr()})`);
       return res.json({ count: rows[0].n, supply: 10000 });
     } catch (e) { neonFailed(e); }
   }
   // Neon is the store but unreachable + no local file data => warming up, not "0".
   const list = readWhitelist();
   if (sql && list.length === 0) return res.status(503).json({ warming: true, supply: 10000 });
-  res.json({ count: list.length, supply: 10000 });
+  res.json({ count: list.filter((e) => !isHidden(e.handle)).length, supply: 10000 });
 });
 
 /* --- 3d. Public ruglist: every NFT burned, by whom -------------- */
@@ -304,14 +310,18 @@ app.get("/api/ruglist", async (req, res) => {
         FROM whitelist, jsonb_array_elements(burns) AS b
         ORDER BY updated_at DESC
         LIMIT 500`);
-      return res.json({ ok: true, count: rows.length, rows });
+      const visible = rows.filter((r) => !isHidden(r.handle));
+      return res.json({ ok: true, count: visible.length, rows: visible });
     } catch (e) { neonFailed(e); }
   }
   const list = readWhitelist();
   if (sql && list.length === 0) return res.status(503).json({ ok: false, warming: true, error: "Database warming up." });
   const rows = [];
-  for (const e of list) for (const b of (e.burns || [])) {
-    rows.push({ handle: e.handle, collection: b.projectName, token_id: b.tokenId, contract: b.contract, tx: b.tx, chain_id: e.chainId, ts: 0 });
+  for (const e of list) {
+    if (isHidden(e.handle)) continue;
+    for (const b of (e.burns || [])) {
+      rows.push({ handle: e.handle, collection: b.projectName, token_id: b.tokenId, contract: b.contract, tx: b.tx, chain_id: e.chainId, ts: 0 });
+    }
   }
   rows.reverse();
   res.json({ ok: true, count: rows.length, rows: rows.slice(0, 500) });
