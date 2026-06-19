@@ -1026,19 +1026,20 @@ const OAUTH_ERRORS = {
 };
 
 /* ----------------------------- /apply PAGE ----------------------------- */
-// A username chip that copies "@handle" on click (a proper dashboard button).
+// A username chip: copies "@handle" to the clipboard, then opens the dashboard.
 function navUserCopyChip(username) {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = "nav__userbtn";
-  btn.title = "Click to copy";
+  btn.title = "Copy username + open dashboard";
   btn.textContent = "@" + username;
   btn.onclick = () => {
     const txt = "@" + username;
+    const go = () => { window.location.href = "/apply"; };
     (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => {
       btn.classList.add("copied"); btn.textContent = "copied ✓";
-      setTimeout(() => { btn.classList.remove("copied"); btn.textContent = txt; }, 1200);
-    }).catch(() => {});
+      setTimeout(go, 550);
+    }).catch(go);
   };
   return btn;
 }

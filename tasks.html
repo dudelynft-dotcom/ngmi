@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=44" />
+  <link rel="stylesheet" href="styles.css?v=45" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0b'/><text x='50' y='72' font-size='62' font-family='monospace' font-weight='bold' fill='%23c6f24e' text-anchor='middle'>N</text></svg>" />
   <style>
     .pts { max-width: 880px; margin: 0 auto; padding: 24px clamp(16px,4vw,40px) 90px; }
@@ -130,8 +130,8 @@
         const el = $("#navUser"); if (!el) return;
         const txt = "@" + u.username;
         const btn = document.createElement("button");
-        btn.type = "button"; btn.className = "nav__userbtn"; btn.title = "Click to copy"; btn.textContent = txt;
-        btn.onclick = () => { (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => { btn.classList.add("copied"); btn.textContent = "copied ✓"; setTimeout(() => { btn.classList.remove("copied"); btn.textContent = txt; }, 1200); }).catch(() => {}); };
+        btn.type = "button"; btn.className = "nav__userbtn"; btn.title = "Copy username + open dashboard"; btn.textContent = txt;
+        btn.onclick = () => { (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => { btn.classList.add("copied"); btn.textContent = "copied ✓"; setTimeout(() => { window.location.href = "/apply"; }, 550); }).catch(() => { window.location.href = "/apply"; }); };
         el.innerHTML = ""; el.appendChild(btn);
       } catch {}
     }
