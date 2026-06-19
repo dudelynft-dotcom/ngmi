@@ -1334,17 +1334,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.title = `${BRAND.name} - 10,000 Pre-Rugged Pepes`;
 
   await checkAuth();
-  // Already logged in? Swap the "Join Whitelist" button for a username chip that opens the dashboard.
+  // Already applied? Swap the "Join Whitelist" button for a "Dashboard" button.
   if (APP.user) {
-    const wl = $("#navWl");
-    if (wl) {
-      const a = document.createElement("a");
-      a.className = "btn btn--accent";
-      a.href = "/apply";
-      a.id = "navWl";
-      a.title = "Open your dashboard";
-      a.textContent = "@" + APP.user.username;
-      wl.replaceWith(a);
+    const app = await fetchMyApplication();
+    if (app && app !== "warming") {
+      const wl = $("#navWl");
+      if (wl) {
+        const a = document.createElement("a");
+        a.className = "btn btn--accent";
+        a.href = "/apply";
+        a.id = "navWl";
+        a.title = "Open your dashboard";
+        a.textContent = "Dashboard →";
+        wl.replaceWith(a);
+      }
     }
   }
 
