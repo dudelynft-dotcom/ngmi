@@ -1302,9 +1302,19 @@ function initRouter() {
 }
 
 // Mobile hamburger: toggle the dropdown nav; close it when a link is tapped.
+// Highlight the nav link for the current page.
+function markActiveNav(nav) {
+  let p = location.pathname;
+  if (p.length > 1 && p.slice(-1) === "/") p = p.slice(0, -1);
+  nav.querySelectorAll(".nav__links a").forEach(a => {
+    if (a.getAttribute("href") === p) a.classList.add("is-active");
+  });
+}
 function initNavToggle() {
   const nav = document.querySelector(".nav"), tog = document.getElementById("navToggle");
-  if (!nav || !tog) return;
+  if (!nav) return;
+  markActiveNav(nav);
+  if (!tog) return;
   tog.addEventListener("click", () => {
     const open = nav.classList.toggle("nav--open");
     tog.setAttribute("aria-expanded", open ? "true" : "false");

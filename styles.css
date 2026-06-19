@@ -73,6 +73,7 @@ code { font-family: var(--mono); font-size: .9em; background: var(--paper-3); pa
 .nav__links { justify-self: center; display: flex; gap: 24px; font-family: var(--mono); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
 .nav__links a { color: var(--ink-soft); padding-bottom: 2px; border-bottom: 2px solid transparent; transition: color .12s, border-color .12s; }
 .nav__links a:hover { color: var(--ink); border-color: var(--acid); }
+.nav__links a.is-active { color: var(--rug); border-color: var(--rug); font-weight: 700; }
 .nav__toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 4px; width: 42px; height: 38px; padding: 0; background: none; border: 2px solid var(--ink); border-radius: 3px; cursor: pointer; }
 .nav__toggle span { display: block; width: 18px; height: 2px; background: var(--ink); transition: transform .2s, opacity .2s; }
 .nav .btn { justify-self: end; }
