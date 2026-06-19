@@ -40,6 +40,7 @@ const ME_URL = "https://api.twitter.com/2/users/me?user.fields=profile_image_url
 const DATA_DIR = path.join(__dirname, "data");
 const WL_FILE = path.join(DATA_DIR, "whitelist.json");
 const POINTS_FILE = path.join(DATA_DIR, "points.json");
+const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 // On serverless (Vercel) the filesystem is read-only - the JSON fallback just won't be used there
 // (Neon is reachable from Vercel), so don't crash if we can't create the dir.
 try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch {}
@@ -66,6 +67,12 @@ function readPoints() {
 }
 function writePoints(obj) {
   try { fs.writeFileSync(POINTS_FILE, JSON.stringify(obj, null, 2)); } catch {}
+}
+function readSettingsFile() {
+  try { return JSON.parse(fs.readFileSync(SETTINGS_FILE, "utf8")); } catch { return {}; }
+}
+function writeSettingsFile(obj) {
+  try { fs.writeFileSync(SETTINGS_FILE, JSON.stringify(obj, null, 2)); } catch {}
 }
 // Map a file-stored entry (camelCase) to the same shape the Neon queries return (snake_case).
 function fileEntryToApi(e) {
@@ -132,6 +139,9 @@ async function initDb() {
     id TEXT PRIMARY KEY, label TEXT, descr TEXT, points INTEGER DEFAULT 0,
     url TEXT, auto BOOLEAN DEFAULT false, active BOOLEAN DEFAULT true,
     sort INTEGER DEFAULT 100, created_at TIMESTAMPTZ DEFAULT now()
+  )`;
+  await tsql`CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY, value TEXT, updated_at TIMESTAMPTZ DEFAULT now()
   )`;
   for (const t of DEFAULT_TASKS) {
     await tsql`INSERT INTO tasks (id, label, descr, points, url, auto, sort)
@@ -454,6 +464,34 @@ async function getTasks(includeInactive = false) {
 async function getTask(id) { return (await getTasks(true)).find((t) => t.id === id); }
 const toPublicTask = (t) => ({ id: t.id, label: t.label, desc: t.desc, points: t.points, url: t.url || null, auto: !!t.auto });
 
+/* ----------------------------- settings (admin-editable) ----------------------------- */
+async function getSetting(key) {
+  if (neonUp()) {
+    try { const r = await neonRead(() => sql`SELECT value FROM settings WHERE key = ${key}`); if (r[0]) return r[0].value; }
+    catch (e) { neonFailed(e); }
+  }
+  return readSettingsFile()[key];
+}
+async function setSetting(key, value) {
+  if (neonUp()) {
+    try { await tsql`INSERT INTO settings (key, value, updated_at) VALUES (${key}, ${value}, now()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`; }
+    catch (e) { neonFailed(e); }
+  }
+  const s = readSettingsFile(); s[key] = value; writeSettingsFile(s);
+  return value;
+}
+async function getTweetUrl() { return (await getSetting("tweet_url")) || PINNED_TWEET; }
+const tweetIdOf = (url) => (String(url || "").match(/status\/(\d+)/) || [])[1] || "";
+// Tweet-bound farm tasks always point at the current/admin-set tweet, not a stale baked-in one.
+function tweetTaskUrl(id, tweetUrl) {
+  const tid = tweetIdOf(tweetUrl);
+  if (id === "like") return tid ? `https://x.com/intent/like?tweet_id=${tid}` : tweetUrl;
+  if (id === "repost") return tweetUrl;
+  if (id === "comment") return tid ? `https://twitter.com/intent/tweet?in_reply_to=${tid}` : tweetUrl;
+  if (id === "quote") return `https://twitter.com/intent/tweet?url=${encodeURIComponent(tweetUrl)}`;
+  return null;
+}
+
 async function getPointsRow(userId) {
   if (neonUp()) {
     try { const r = await neonRead(() => sql`SELECT balance, claimed FROM points WHERE user_id = ${userId}`); return r[0] || null; }
@@ -496,6 +534,8 @@ async function hasApplication(userId) {
 app.get("/api/points/me", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const tasks = (await getTasks()).map(toPublicTask);
+  const tweetUrl = await getTweetUrl();
+  for (const t of tasks) { const u = tweetTaskUrl(t.id, tweetUrl); if (u) t.url = u; }
   const user = req.session.user;
   if (!user) return res.json({ ok: true, authed: false, balance: 0, claimed: [], tasks });
   let row = await getPointsRow(user.id);
@@ -516,6 +556,24 @@ app.post("/api/points/claim", async (req, res) => {
   if (!task || task.auto || task.active === false) return res.status(400).json({ ok: false, error: "Not a claimable task." });
   const r = await awardPoints(user, taskId);
   res.json(r);
+});
+
+/* public: the current "latest tweet" that powers the homepage pill + tweet tasks */
+app.get("/api/tweet", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const url = await getTweetUrl();
+  res.json({ ok: true, url, id: tweetIdOf(url) });
+});
+/* admin: set the latest tweet (drives the "NGMI just tweeted" pill and like/repost/comment/quote tasks) */
+app.post("/api/admin/tweet", async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ ok: false, error: "Bad token." });
+  res.set("Cache-Control", "no-store");
+  const url = String((req.body || {}).url || "").trim();
+  if (!/^https?:\/\/(x\.com|twitter\.com)\/[^\/]+\/status\/\d+/i.test(url)) {
+    return res.status(400).json({ ok: false, error: "Enter a full tweet URL, e.g. https://x.com/engmiHQ/status/123..." });
+  }
+  await setSetting("tweet_url", url);
+  res.json({ ok: true, url, id: tweetIdOf(url) });
 });
 
 /* admin: manage quest tasks (requires Neon) */

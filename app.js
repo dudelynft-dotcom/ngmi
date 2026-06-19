@@ -1347,4 +1347,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       wl.replaceWith(a);
     }
   }
+
+  // Point the "NGMI just tweeted" pill at the latest admin-set tweet.
+  try {
+    const tb = $("#tweetbarLink");
+    if (tb) {
+      const r = await fetch("/api/tweet", { cache: "no-store" });
+      const d = await r.json();
+      if (d && d.url) tb.href = d.url;
+    }
+  } catch {}
 });

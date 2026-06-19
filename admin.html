@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=41" />
+  <link rel="stylesheet" href="styles.css?v=42" />
   <style>
     .admin { max-width: 1200px; margin: 0 auto; padding: 28px clamp(16px,4vw,40px) 80px; }
     .admin h1 { font-family: var(--poster); font-weight: 400; font-size: 40px; margin: 0 0 6px; }
@@ -46,6 +46,17 @@
       <button class="btn btn--primary" id="save">Load</button>
       <button class="btn btn--ghost" id="refresh">↻ Refresh</button>
     </div>
+
+    <section class="tweetset" style="margin:0 0 26px;padding:16px 18px;border:2px solid var(--ink);background:var(--paper-2)">
+      <h2 style="font-family:var(--poster);font-weight:400;font-size:22px;margin:0 0 4px">Latest tweet</h2>
+      <p class="admin__msg" style="margin:0 0 10px">Drives the <b>"NGMI just tweeted"</b> pill on the homepage and the <b>like / repost / comment / quote</b> tasks on Farm. Paste a full tweet URL and save.</p>
+      <div class="admin__bar" style="margin:0">
+        <input id="tweetUrl" type="text" placeholder="https://x.com/engmiHQ/status/123..." />
+        <button class="btn btn--primary" id="tweetSave">Save tweet</button>
+        <a id="tweetView" target="_blank" rel="noopener" style="display:none;font-family:var(--mono);font-size:13px;color:var(--rug)">view ↗</a>
+      </div>
+      <div class="admin__msg" id="tweetMsg" style="margin:8px 0 0"></div>
+    </section>
 
     <div class="stat-row" id="stats"></div>
     <div class="admin__msg" id="msg"></div>
@@ -192,9 +203,32 @@
     window.editTask = editTask; window.delTask = delTask;
     $("#tSave").onclick = saveTask;
 
+    /* ----- Latest tweet ----- */
+    async function loadTweet() {
+      try {
+        const r = await fetch("/api/tweet", { cache: "no-store" });
+        const d = await r.json();
+        if (d && d.url) { $("#tweetUrl").value = d.url; const v = $("#tweetView"); v.href = d.url; v.textContent = "view ↗"; v.style.display = ""; }
+      } catch {}
+    }
+    async function saveTweet() {
+      const url = $("#tweetUrl").value.trim();
+      if (!url) { $("#tweetMsg").textContent = "Paste a tweet URL first."; return; }
+      if (!token) { $("#tweetMsg").textContent = "Enter your admin token (top of page) first."; return; }
+      $("#tweetMsg").textContent = "Saving…";
+      try {
+        const r = await fetch("/api/admin/tweet", { method: "POST", headers: { "Content-Type": "application/json", "x-admin-token": token }, body: JSON.stringify({ url }) });
+        const d = await r.json();
+        if (d.ok) { $("#tweetMsg").textContent = "Saved. Homepage pill + tweet tasks now point here."; const v = $("#tweetView"); v.href = d.url; v.style.display = ""; }
+        else $("#tweetMsg").textContent = "Error: " + (d.error || r.status);
+      } catch (e) { $("#tweetMsg").textContent = "Error: " + e.message; }
+    }
+    $("#tweetSave").onclick = saveTweet;
+
     window.decide = decide;
     $("#save").onclick = () => { token = $("#token").value.trim(); localStorage.setItem("ngmi_admin", token); load(); loadTasks(); };
-    $("#refresh").onclick = () => { load(); loadTasks(); };
+    $("#refresh").onclick = () => { load(); loadTasks(); loadTweet(); };
+    loadTweet();
     if (token) { load(); loadTasks(); }
   </script>
 </body>
