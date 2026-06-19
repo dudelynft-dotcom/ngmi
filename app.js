@@ -441,12 +441,34 @@ function stepConfess() {
         <option>Nothing. I've accepted my role as exit liquidity.</option>
       </select>
     </div>
+
+    <div class="follow-cta">
+      <div class="follow-cta__txt"><b>Follow @engmiHQ on X</b><span>The least you can do before we rug you. <b class="acid">+250</b> NGMI points.</span></div>
+      <button type="button" class="btn btn--accent" id="cFollow">Follow →</button>
+    </div>
+
     <div class="modal__foot">
       <button class="btn btn--ghost" id="cBack">← Back</button>
       <button class="btn btn--primary" id="cNext">I confess →</button>
     </div>
   `);
   $("#cBack").onclick = () => { if (IS_APPLY()) window.location.href = "/"; else stepLogin(); };
+  const followBtn = $("#cFollow");
+  if (followBtn) {
+    followBtn.onclick = async () => {
+      window.open("https://x.com/engmiHQ", "_blank", "noopener");
+      followBtn.disabled = true; followBtn.textContent = "Claiming...";
+      try {
+        const r = await fetch("/api/points/claim", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ taskId: "follow" }) });
+        const d = await r.json();
+        if (d.ok) { followBtn.textContent = "Followed ✓"; toast("Nice. +250 NGMI points."); }
+        else { followBtn.disabled = false; followBtn.textContent = "Follow →"; }
+      } catch { followBtn.disabled = false; followBtn.textContent = "Follow →"; }
+    };
+    fetch("/api/points/me", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(d => {
+      if (d && (d.claimed || []).includes("follow")) { followBtn.disabled = true; followBtn.textContent = "Followed ✓"; }
+    }).catch(() => {});
+  }
   $("#cNext").onclick = () => {
     const lost = ($("#cLost").value || "").trim();
     const cope = $("#cCope").value || "";

@@ -519,6 +519,12 @@ code { font-family: var(--mono); font-size: .9em; background: var(--paper-3); pa
 .bonus-row .bonus-line { margin: 0; flex: 1; }
 .bonus-row__img { flex: none; width: 104px; height: auto; display: block; }
 @media (max-width: 480px) { .bonus-row { flex-direction: column; align-items: stretch; } .bonus-row__img { width: 100%; max-width: 170px; margin: 0 auto; } }
+/* Follow CTA in the confess step */
+.follow-cta { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 0 20px; padding: 12px 14px; border: 2px solid var(--ink); border-radius: 4px; background: rgba(198,242,78,.16); }
+.follow-cta__txt b { display: block; font-family: var(--font); font-weight: 900; font-size: 15px; }
+.follow-cta__txt span { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); }
+.follow-cta__txt .acid { color: var(--acid-ink); }
+.follow-cta .btn { flex: none; }
 .wl__bonus-tag { display: inline-block; font-family: var(--mono); font-weight: 700; font-size: 11px; letter-spacing: .06em; background: var(--acid); color: var(--acid-ink); padding: 2px 9px; border-radius: 2px; margin-bottom: 9px; }
 .wl__bonus p { margin: 0; font-size: 15px; line-height: 1.55; }
 .wl__bonus b { color: var(--acid); }

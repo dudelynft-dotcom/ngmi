@@ -128,6 +128,16 @@ async function initDb() {
     user_id TEXT PRIMARY KEY, handle TEXT, balance INTEGER DEFAULT 0,
     claimed JSONB DEFAULT '[]'::jsonb, updated_at TIMESTAMPTZ DEFAULT now()
   )`;
+  await tsql`CREATE TABLE IF NOT EXISTS tasks (
+    id TEXT PRIMARY KEY, label TEXT, descr TEXT, points INTEGER DEFAULT 0,
+    url TEXT, auto BOOLEAN DEFAULT false, active BOOLEAN DEFAULT true,
+    sort INTEGER DEFAULT 100, created_at TIMESTAMPTZ DEFAULT now()
+  )`;
+  for (const t of DEFAULT_TASKS) {
+    await tsql`INSERT INTO tasks (id, label, descr, points, url, auto, sort)
+      VALUES (${t.id}, ${t.label}, ${t.desc}, ${t.points}, ${t.url || ""}, ${!!t.auto}, ${t.sort})
+      ON CONFLICT (id) DO NOTHING`;
+  }
   console.log("   Storage: Neon Postgres ✅");
 }
 
@@ -412,20 +422,32 @@ app.get("/api/collection-image", async (req, res) => {
   } catch { res.json({ image: "", name: "" }); }
 });
 
-/* --- 4. Whitelist submission (requires X login) ---------------- */
-/* --- 3f. NGMI Points (quests for beggars with no NFT to burn) --- */
+/* --- 3f. NGMI Points + quests (tasks are admin-manageable, stored in Neon) --- */
 const X_HANDLE = process.env.X_HANDLE || "engmiHQ";
 const PINNED_TWEET = process.env.PINNED_TWEET || "https://x.com/engmiHQ/status/2067881636310536628";
 const intent = (text) => "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
-const TASKS = [
-  { id: "apply",   points: 1000, label: "Complete the whitelist application", desc: "Login, confess, burn (or skip the burn and farm here). Auto-awarded on submit.", auto: true, url: "/apply" },
-  { id: "follow",  points: 250,  label: `Follow @${X_HANDLE} on X`, desc: "We will not follow back. We do not care about you. Follow anyway.", url: `https://x.com/${X_HANDLE}` },
-  { id: "repost",  points: 250,  label: "Repost the launch post", desc: "Amplify your own exit liquidity to your followers.", url: PINNED_TWEET },
-  { id: "post",    points: 300,  label: `Post that you're exit liquidity, tag @${X_HANDLE}`, desc: "Public admission of being NGMI. Cathartic.", url: intent(`I am the exit liquidity. @${X_HANDLE} told me to my face and I said bet. ngmi https://engmi.fun`) },
-  { id: "invite",  points: 200,  label: "Quote-post and drag 3 friends in", desc: "Misery loves company. Bring more exit liquidity.", url: intent(`burn your bags, farm worthless points, get rugged together. @${X_HANDLE} https://engmi.fun`) },
+const DEFAULT_TASKS = [
+  { id: "apply",  points: 1000, label: "Complete the whitelist application", desc: "Login, confess, burn (or skip the burn and farm here). Auto-awarded on submit.", auto: true, url: "/apply", sort: 10 },
+  { id: "follow", points: 250,  label: `Follow @${X_HANDLE} on X`, desc: "We will not follow back. We do not care about you. Follow anyway.", url: `https://x.com/${X_HANDLE}`, sort: 20 },
+  { id: "repost", points: 250,  label: "Repost the launch post", desc: "Amplify your own exit liquidity to your followers.", url: PINNED_TWEET, sort: 30 },
+  { id: "post",   points: 300,  label: `Post that you're exit liquidity, tag @${X_HANDLE}`, desc: "Public admission of being NGMI. Cathartic.", url: intent(`I am the exit liquidity. @${X_HANDLE} told me to my face and I said bet. ngmi https://engmi.fun`), sort: 40 },
+  { id: "invite", points: 200,  label: "Quote-post and drag 3 friends in", desc: "Misery loves company. Bring more exit liquidity.", url: intent(`burn your bags, farm worthless points, get rugged together. @${X_HANDLE} https://engmi.fun`), sort: 50 },
 ];
-const TASK_BY_ID = Object.fromEntries(TASKS.map((t) => [t.id, t]));
-const publicTasks = () => TASKS.map((t) => ({ id: t.id, label: t.label, desc: t.desc, points: t.points, url: t.url || null, auto: !!t.auto }));
+
+async function getTasks(includeInactive = false) {
+  if (neonUp()) {
+    try {
+      const rows = await neonRead(() => sql`SELECT id, label, descr, points, url, auto, active, sort FROM tasks ORDER BY sort, id`);
+      if (rows.length) {
+        const list = rows.map((r) => ({ id: r.id, label: r.label, desc: r.descr, points: r.points, url: r.url, auto: r.auto, active: r.active, sort: r.sort }));
+        return includeInactive ? list : list.filter((t) => t.active !== false);
+      }
+    } catch (e) { neonFailed(e); }
+  }
+  return DEFAULT_TASKS.map((t) => ({ ...t, active: true }));
+}
+async function getTask(id) { return (await getTasks(true)).find((t) => t.id === id); }
+const toPublicTask = (t) => ({ id: t.id, label: t.label, desc: t.desc, points: t.points, url: t.url || null, auto: !!t.auto });
 
 async function getPointsRow(userId) {
   if (neonUp()) {
@@ -436,7 +458,7 @@ async function getPointsRow(userId) {
   return p[userId] ? { balance: p[userId].balance, claimed: p[userId].claimed } : null;
 }
 async function awardPoints(user, taskId) {
-  const task = TASK_BY_ID[taskId];
+  const task = await getTask(taskId);
   if (!task) return { ok: false, error: "unknown task" };
   const handle = "@" + user.username;
   if (neonUp()) {
@@ -460,21 +482,59 @@ async function awardPoints(user, taskId) {
 
 app.get("/api/points/me", async (req, res) => {
   res.set("Cache-Control", "no-store");
+  const tasks = (await getTasks()).map(toPublicTask);
   const user = req.session.user;
-  if (!user) return res.json({ ok: true, authed: false, balance: 0, claimed: [], tasks: publicTasks() });
+  if (!user) return res.json({ ok: true, authed: false, balance: 0, claimed: [], tasks });
   const row = await getPointsRow(user.id);
-  res.json({ ok: true, authed: true, handle: "@" + user.username, balance: row ? row.balance : 0, claimed: row ? row.claimed : [], tasks: publicTasks() });
+  res.json({ ok: true, authed: true, handle: "@" + user.username, balance: row ? row.balance : 0, claimed: row ? row.claimed : [], tasks });
 });
 app.post("/api/points/claim", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const user = req.session.user;
   if (!user) return res.status(401).json({ ok: false, error: "Login with X first." });
   const taskId = String((req.body || {}).taskId || "");
-  const task = TASK_BY_ID[taskId];
-  if (!task || task.auto) return res.status(400).json({ ok: false, error: "Not a claimable task." });
+  const task = await getTask(taskId);
+  if (!task || task.auto || task.active === false) return res.status(400).json({ ok: false, error: "Not a claimable task." });
   const r = await awardPoints(user, taskId);
   res.json(r);
 });
+
+/* admin: manage quest tasks (requires Neon) */
+app.get("/api/admin/tasks", async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ ok: false, error: "Bad token." });
+  res.set("Cache-Control", "no-store");
+  res.json({ ok: true, tasks: await getTasks(true) });
+});
+app.post("/api/admin/tasks", async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ ok: false, error: "Bad token." });
+  if (!sql) return res.status(503).json({ ok: false, error: "Tasks management needs Neon (DATABASE_URL)." });
+  const b = req.body || {};
+  const id = String(b.id || "").trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+  if (!id) return res.status(400).json({ ok: false, error: "id required (letters, numbers, - _)" });
+  const label = String(b.label || "").slice(0, 160);
+  const descr = String(b.desc != null ? b.desc : b.descr || "").slice(0, 300);
+  const points = Math.max(0, Math.min(100000, parseInt(b.points, 10) || 0));
+  const url = String(b.url || "").slice(0, 400);
+  const auto = !!b.auto;
+  const active = b.active === false ? false : true;
+  const sort = Number.isFinite(+b.sort) ? +b.sort : 100;
+  try {
+    await tsql`INSERT INTO tasks (id, label, descr, points, url, auto, active, sort)
+      VALUES (${id}, ${label}, ${descr}, ${points}, ${url}, ${auto}, ${active}, ${sort})
+      ON CONFLICT (id) DO UPDATE SET label=EXCLUDED.label, descr=EXCLUDED.descr, points=EXCLUDED.points,
+        url=EXCLUDED.url, auto=EXCLUDED.auto, active=EXCLUDED.active, sort=EXCLUDED.sort`;
+    res.json({ ok: true, tasks: await getTasks(true) });
+  } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
+});
+app.post("/api/admin/tasks/delete", async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ ok: false, error: "Bad token." });
+  if (!sql) return res.status(503).json({ ok: false, error: "Needs Neon." });
+  const id = String((req.body || {}).id || "").trim();
+  try { await tsql`DELETE FROM tasks WHERE id = ${id}`; res.json({ ok: true, tasks: await getTasks(true) }); }
+  catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
+});
+
+/* --- 4. Whitelist submission (requires X login) ---------------- */
 
 app.post("/api/whitelist", async (req, res) => {
   const user = req.session.user;

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=37" />
+  <link rel="stylesheet" href="styles.css?v=38" />
   <style>
     .admin { max-width: 1200px; margin: 0 auto; padding: 28px clamp(16px,4vw,40px) 80px; }
     .admin h1 { font-family: var(--poster); font-weight: 400; font-size: 40px; margin: 0 0 6px; }
@@ -30,6 +30,9 @@
     .tbl .no { background: #fff; }
     .stat-row { display: flex; gap: 20px; font-family: var(--mono); font-size: 13px; margin-bottom: 14px; flex-wrap: wrap; }
     .stat-row b { font-family: var(--poster); font-size: 22px; }
+    .taskform { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; align-items: center; }
+    .taskform input { font-family: var(--mono); font-size: 13px; border: 2px solid var(--ink); border-radius: 2px; padding: 9px 11px; }
+    .taskform__chk { font-family: var(--mono); font-size: 13px; display: flex; align-items: center; gap: 6px; }
   </style>
 </head>
 <body>
@@ -47,6 +50,25 @@
     <div class="stat-row" id="stats"></div>
     <div class="admin__msg" id="msg"></div>
     <div id="tableWrap"></div>
+
+    <section style="margin-top:52px">
+      <h1 style="font-size:30px">Quest tasks</h1>
+      <p class="admin__msg">Tasks shown on the <b>Farm</b> page. Use a unique id (letters/numbers/-/_). Edit a row to load it into the form. "active" off hides it. (Requires Neon.)</p>
+      <div id="tasksWrap"><p class="admin__msg">Load with your token to manage tasks.</p></div>
+
+      <h2 style="font-family:var(--poster);font-weight:400;font-size:22px;margin:24px 0 8px">Add / edit a task</h2>
+      <div class="taskform">
+        <input id="tId" placeholder="id (e.g. discord)" />
+        <input id="tPoints" type="number" placeholder="points (e.g. 250)" />
+        <input id="tLabel" placeholder="label (e.g. Join the Discord)" />
+        <input id="tDesc" placeholder="description (optional)" />
+        <input id="tUrl" placeholder="action URL (optional)" />
+        <input id="tSort" type="number" placeholder="sort (lower = top)" />
+        <label class="taskform__chk"><input id="tActive" type="checkbox" checked /> active</label>
+        <button class="btn btn--primary" id="tSave">Save task</button>
+      </div>
+      <div class="admin__msg" id="taskMsg"></div>
+    </section>
   </main>
 
   <script>
@@ -116,10 +138,64 @@
         <tbody>${body}</tbody></table>`;
     }
 
+    /* ----- Quest tasks management ----- */
+    async function loadTasks() {
+      if (!token) return;
+      try {
+        const r = await fetch("/api/admin/tasks?token=" + encodeURIComponent(token));
+        if (!r.ok) { $("#tasksWrap").innerHTML = "<p class='admin__msg'>Could not load tasks.</p>"; return; }
+        const d = await r.json();
+        renderTasks(d.tasks || []);
+      } catch (e) { $("#tasksWrap").innerHTML = "<p class='admin__msg'>Error: " + esc(e.message) + "</p>"; }
+    }
+    function renderTasks(tasks) {
+      window._tasks = tasks;
+      if (!tasks.length) { $("#tasksWrap").innerHTML = "<p class='admin__msg'>No tasks.</p>"; return; }
+      const body = tasks.map(t => `<tr>
+        <td class="mono">${esc(t.id)}</td>
+        <td>${esc(t.label || "")}<br><span class="admin__msg" style="margin:0">${esc(t.desc || "")}</span></td>
+        <td class="mono" style="text-align:center">${t.points}</td>
+        <td class="mono" style="font-size:11px">${t.url ? `<a href="${esc(t.url)}" target="_blank" rel="noopener">link</a>` : "-"}</td>
+        <td class="mono" style="text-align:center">${t.auto ? "auto" : ""}</td>
+        <td class="mono" style="text-align:center">${t.active === false ? "<span style='color:var(--rug)'>off</span>" : "on"}</td>
+        <td class="mono" style="text-align:center">${t.sort}</td>
+        <td><div class="act">
+          <button class="no" onclick="editTask('${esc(t.id)}')">Edit</button>
+          <button class="no" onclick="delTask('${esc(t.id)}')">Delete</button>
+        </div></td>
+      </tr>`).join("");
+      $("#tasksWrap").innerHTML = `<table class="tbl"><thead><tr><th class="mono">ID</th><th>Label</th><th class="mono">Pts</th><th>URL</th><th class="mono">Auto</th><th class="mono">Active</th><th class="mono">Sort</th><th>Action</th></tr></thead><tbody>${body}</tbody></table>`;
+    }
+    function editTask(id) {
+      const t = (window._tasks || []).find(x => x.id === id); if (!t) return;
+      $("#tId").value = t.id; $("#tPoints").value = t.points; $("#tLabel").value = t.label || "";
+      $("#tDesc").value = t.desc || ""; $("#tUrl").value = t.url || ""; $("#tSort").value = t.sort;
+      $("#tActive").checked = t.active !== false;
+      $("#tId").scrollIntoView({ behavior: "smooth" });
+    }
+    async function saveTask() {
+      const body = { id: $("#tId").value, points: $("#tPoints").value, label: $("#tLabel").value, desc: $("#tDesc").value, url: $("#tUrl").value, sort: $("#tSort").value, active: $("#tActive").checked };
+      if (!body.id.trim()) { $("#taskMsg").textContent = "id is required."; return; }
+      $("#taskMsg").textContent = "Saving…";
+      try {
+        const r = await fetch("/api/admin/tasks", { method: "POST", headers: { "Content-Type": "application/json", "x-admin-token": token }, body: JSON.stringify(body) });
+        const d = await r.json();
+        if (d.ok) { $("#taskMsg").textContent = "Saved."; renderTasks(d.tasks || []); ["tId","tPoints","tLabel","tDesc","tUrl","tSort"].forEach(i => $("#" + i).value = ""); $("#tActive").checked = true; }
+        else $("#taskMsg").textContent = "Error: " + (d.error || r.status);
+      } catch (e) { $("#taskMsg").textContent = "Error: " + e.message; }
+    }
+    async function delTask(id) {
+      if (!confirm("Delete task '" + id + "'? (existing claims keep their points)")) return;
+      const r = await fetch("/api/admin/tasks/delete", { method: "POST", headers: { "Content-Type": "application/json", "x-admin-token": token }, body: JSON.stringify({ id }) });
+      const d = await r.json(); if (d.ok) renderTasks(d.tasks || []);
+    }
+    window.editTask = editTask; window.delTask = delTask;
+    $("#tSave").onclick = saveTask;
+
     window.decide = decide;
-    $("#save").onclick = () => { token = $("#token").value.trim(); localStorage.setItem("ngmi_admin", token); load(); };
-    $("#refresh").onclick = load;
-    if (token) load();
+    $("#save").onclick = () => { token = $("#token").value.trim(); localStorage.setItem("ngmi_admin", token); load(); loadTasks(); };
+    $("#refresh").onclick = () => { load(); loadTasks(); };
+    if (token) { load(); loadTasks(); }
   </script>
 </body>
 </html>
