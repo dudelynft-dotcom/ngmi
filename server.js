@@ -426,13 +426,17 @@ app.get("/api/collection-image", async (req, res) => {
 /* --- 3f. NGMI Points + quests (tasks are admin-manageable, stored in Neon) --- */
 const X_HANDLE = process.env.X_HANDLE || "engmiHQ";
 const PINNED_TWEET = process.env.PINNED_TWEET || "https://x.com/engmiHQ/status/2067881636310536628";
+const TWEET_ID = (PINNED_TWEET.match(/status\/(\d+)/) || [])[1] || "";
 const intent = (text) => "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
 const DEFAULT_TASKS = [
-  { id: "apply",  points: 1000, label: "Complete the whitelist application", desc: "Login, confess, burn (or skip the burn and farm here). Auto-awarded on submit.", auto: true, url: "/apply", sort: 10 },
-  { id: "follow", points: 250,  label: `Follow @${X_HANDLE} on X`, desc: "We will not follow back. We do not care about you. Follow anyway.", url: `https://x.com/${X_HANDLE}`, sort: 20 },
-  { id: "repost", points: 250,  label: "Repost the launch post", desc: "Amplify your own exit liquidity to your followers.", url: PINNED_TWEET, sort: 30 },
-  { id: "post",   points: 300,  label: `Post that you're exit liquidity, tag @${X_HANDLE}`, desc: "Public admission of being NGMI. Cathartic.", url: intent(`I am the exit liquidity. @${X_HANDLE} told me to my face and I said bet. ngmi https://engmi.fun`), sort: 40 },
-  { id: "invite", points: 200,  label: "Quote-post and drag 3 friends in", desc: "Misery loves company. Bring more exit liquidity.", url: intent(`burn your bags, farm worthless points, get rugged together. @${X_HANDLE} https://engmi.fun`), sort: 50 },
+  { id: "apply",   points: 1000, label: "Complete the whitelist application", desc: "Login, confess, burn (or skip the burn and farm here). Auto-awarded on submit.", auto: true, url: "/apply", sort: 10 },
+  { id: "follow",  points: 250,  label: `Follow @${X_HANDLE} on X`, desc: "We will not follow back. We do not care about you. Follow anyway.", url: `https://x.com/${X_HANDLE}`, sort: 20 },
+  { id: "like",    points: 150,  label: "Like the launch post", desc: "A tiny dopamine hit for us, nothing for you.", url: `https://x.com/intent/like?tweet_id=${TWEET_ID}`, sort: 30 },
+  { id: "repost",  points: 250,  label: "Repost the launch post", desc: "Amplify your own exit liquidity to your followers.", url: PINNED_TWEET, sort: 40 },
+  { id: "comment", points: 200,  label: "Comment on the launch post", desc: "Reply with your favorite stage of grief.", url: `https://twitter.com/intent/tweet?in_reply_to=${TWEET_ID}`, sort: 50 },
+  { id: "quote",   points: 250,  label: "Quote-tweet the launch post", desc: "Quote it with your own cope and tag a friend.", url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(PINNED_TWEET)}`, sort: 60 },
+  { id: "post",    points: 300,  label: `Post that you're exit liquidity, tag @${X_HANDLE}`, desc: "Public admission of being NGMI. Cathartic.", url: intent(`I am the exit liquidity. @${X_HANDLE} told me to my face and I said bet. ngmi https://engmi.fun`), sort: 70 },
+  { id: "invite",  points: 200,  label: "Drag 3 friends into the trenches", desc: "Misery loves company. Bring more exit liquidity.", url: intent(`burn your bags, farm worthless points, get rugged together. @${X_HANDLE} https://engmi.fun`), sort: 80 },
 ];
 
 async function getTasks(includeInactive = false) {
@@ -481,12 +485,26 @@ async function awardPoints(user, taskId) {
   return { ok: true, already, balance: rec.balance, claimed: rec.claimed };
 }
 
+async function hasApplication(userId) {
+  if (neonUp()) {
+    try { const r = await neonRead(() => sql`SELECT 1 FROM whitelist WHERE user_id = ${userId} LIMIT 1`); return r.length > 0; }
+    catch (e) { neonFailed(e); }
+  }
+  return readWhitelist().some((e) => e.userId === userId);
+}
+
 app.get("/api/points/me", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const tasks = (await getTasks()).map(toPublicTask);
   const user = req.session.user;
   if (!user) return res.json({ ok: true, authed: false, balance: 0, claimed: [], tasks });
-  const row = await getPointsRow(user.id);
+  let row = await getPointsRow(user.id);
+  // Auto-detect an already-completed application and grant the +1000 once (back-fills users
+  // who applied before the points system existed).
+  if (!(row && (row.claimed || []).includes("apply")) && await hasApplication(user.id)) {
+    const aw = await awardPoints(user, "apply").catch(() => null);
+    if (aw && aw.ok) row = { balance: aw.balance, claimed: aw.claimed };
+  }
   res.json({ ok: true, authed: true, handle: "@" + user.username, balance: row ? row.balance : 0, claimed: row ? row.claimed : [], tasks });
 });
 app.post("/api/points/claim", async (req, res) => {
