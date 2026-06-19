@@ -82,6 +82,16 @@
       <div class="exp__card"><span>Burn address</span><b class="mono"><a class="exp__addr" target="_blank" rel="noopener" href="https://etherscan.io/address/0x000000000000000000000000000000000000dEaD">0x0000…dEaD</a></b></div>
     </div>
 
+    <div class="exp__panel" style="margin-bottom:18px">
+      <div class="exp__panel-head"><span>Top ruggers</span><span class="pulse" style="color:var(--ink-soft)">by bags burned</span></div>
+      <div class="exp__scroll">
+        <table class="exp__table" style="min-width:560px">
+          <thead><tr><th>Rank</th><th>Degen</th><th>Bags burned</th><th>Collections</th><th>Last burn</th></tr></thead>
+          <tbody id="topRows"><tr><td colspan="5" class="exp__empty">—</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="exp__panel">
       <div class="exp__panel-head"><span>Latest burns</span><span class="pulse">● live</span></div>
       <div class="exp__scroll">
@@ -125,11 +135,38 @@
       }
     }
 
+    function renderTop(rows) {
+      const map = new Map();
+      for (const r of rows) {
+        const h = r.handle || "anon";
+        if (!map.has(h)) map.set(h, { handle: h, burns: 0, colls: new Set(), latest: 0 });
+        const e = map.get(h);
+        e.burns++;
+        if (r.collection) e.colls.add(String(r.collection).toLowerCase());
+        e.latest = Math.max(e.latest, Number(r.ts) || 0);
+      }
+      const top = [...map.values()].sort((a, b) => b.burns - a.burns || b.colls.size - a.colls.size).slice(0, 5);
+      const tb = $("#topRows");
+      if (!top.length) { tb.innerHTML = `<tr><td colspan="5" class="exp__empty">No ruggers yet.</td></tr>`; return; }
+      tb.innerHTML = top.map((e, i) => {
+        const handle = esc(e.handle), xUser = handle.replace(/^@/, "");
+        const rank = i === 0 ? `<b style="color:var(--rug)">#1</b>` : `#${i + 1}`;
+        return `<tr>
+          <td>${rank}</td>
+          <td><a class="exp__user" href="https://x.com/${xUser}" target="_blank" rel="noopener">${handle}</a></td>
+          <td><b>${e.burns}</b></td>
+          <td>${e.colls.size}</td>
+          <td class="exp__age">${timeAgo(e.latest)}</td>
+        </tr>`;
+      }).join("");
+    }
+
     function render(rows, count) {
       const souls = new Set(rows.map(r => (r.handle || "").toLowerCase()).filter(Boolean)).size;
       $("#cBurns").textContent = count;
       $("#cSouls").textContent = souls || "—";
       $("#cLatest").textContent = rows.length ? timeAgo(rows[0].ts) : "—";
+      renderTop(rows);
       const tbody = $("#rows");
       if (!rows.length) { tbody.innerHTML = `<tr><td colspan="8" class="exp__empty">No burns yet. Be the first to torch your trauma.</td></tr>`; return; }
       tbody.innerHTML = rows.map(r => {
