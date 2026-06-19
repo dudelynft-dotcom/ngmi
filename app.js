@@ -560,7 +560,7 @@ function renderWalletBox() {
   const box = $("#walletBox");
   if (!box) return;
   if (!hasWallet()) {
-    box.innerHTML = `<div class="x-handle" style="border-style:dashed">No browser wallet found - <b>demo mode</b>.<span class="hint" style="margin-left:8px">Install MetaMask for a real burn.</span></div>`;
+    box.innerHTML = `<div class="x-handle" style="border-style:dashed">No browser wallet found.<span class="hint" style="margin-left:8px">A burn is a real on-chain tx - install MetaMask or open in a wallet browser.</span></div>`;
     return;
   }
   if (WL.wallet) {
@@ -664,7 +664,10 @@ function nftCardHtml(n) {
 function renderNftArea() {
   const area = $("#nftArea"); if (!area) return;
 
-  if (!hasWallet()) { area.innerHTML = manualInputsHtml(); return; }
+  if (!hasWallet()) {
+    area.innerHTML = `<p class="hint" style="margin:6px 0 2px">A whitelist burn is a real on-chain transaction, so you need a web3 wallet (MetaMask, Rabby, or a wallet's in-app browser). No wallet, no burn. Nothing to burn anyway? <a href="/tasks" style="color:var(--rug)">Farm points instead →</a></p>`;
+    return;
+  }
   if (!WL.wallet) { area.innerHTML = `<p class="hint" style="margin:6px 0 2px">Connect your wallet to load the NFTs that wronged you.</p>`; return; }
   if (burnState.loading) { area.innerHTML = `<div class="nft-loading">Scanning the chain for your bad decisions…</div>`; return; }
 
@@ -732,7 +735,8 @@ function renderApproval() {
 
 function updateBurnBtn() {
   const btn = $("#bBurn"); if (!btn) return;
-  if (!hasWallet() || burnState.mode === "manual") { btn.disabled = false; btn.textContent = "Burn it live"; return; }
+  if (!hasWallet()) { btn.disabled = true; btn.textContent = "Wallet required to burn"; return; }
+  if (burnState.mode === "manual") { btn.disabled = false; btn.textContent = "Burn it live"; return; }
   const n = burnState.selected.length;
   btn.disabled = n === 0;
   btn.textContent = n > 1 ? `Burn ${n} bags live` : "Burn selected live";
@@ -748,12 +752,16 @@ async function fetchCollectionMeta(contract, chainId) {
 }
 
 async function burnExecute() {
+  // A whitelist burn must be a real on-chain transaction - no wallet, no burn.
+  if (!hasWallet()) { toast("You need a web3 wallet (MetaMask, Rabby, or a wallet browser) to burn. No wallet, no burn."); return; }
+  if (!WL.wallet) { toast("Connect your wallet first."); return; }
+
   const ath = (($("#bAth") && $("#bAth").value) || "").trim();
   if (!ath) { toast("Required: enter the bag's ATH - it decides your odds."); if ($("#bAth")) $("#bAth").focus(); return; }
   WL.nftAth = ath;
 
   let toBurn;
-  if (!hasWallet() || burnState.mode === "manual") {
+  if (burnState.mode === "manual") {
     const contract = (($("#bContract") && $("#bContract").value) || "").trim();
     const tokenId = (($("#bTokenId") && $("#bTokenId").value) || "").trim();
     if (!isAddress(contract)) { toast("Required: a valid contract address (0x + 40 hex)."); return; }
@@ -766,14 +774,6 @@ async function burnExecute() {
     toBurn = burnState.selected.slice();
   }
   WL.approval = clientApproval((WL.priorBurns || []).length + toBurn.length, WL.nftAth); // estimate; server is authoritative
-
-  if (!hasWallet()) { // demo - no real tx
-    const fresh = toBurn.map((n) => ({ contract: n.contract, tokenId: n.tokenId, projectName: n.collection, tx: null }));
-    WL.burns = [...(WL.priorBurns || []), ...fresh];
-    WL.projectName = fresh[0].projectName;
-    runBurnFinale({ live: false });
-    return;
-  }
   burnSelected(toBurn);
 }
 

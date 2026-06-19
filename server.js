@@ -628,13 +628,15 @@ app.post("/api/whitelist", async (req, res) => {
   const shame = String(shameTweet).trim().slice(0, 200);
 
   const s = (v, n) => String(v || "").slice(0, n);
+  const txOk = (t) => /^0x[0-9a-fA-F]{64}$/.test(t || "");
+  // Only real on-chain burns count: every burn must carry a valid transaction hash.
   const cleanBurns = Array.isArray(burns)
     ? burns.slice(0, 20).map((b) => ({
         projectName: s(b && b.projectName, 128),
         contract: s(b && b.contract, 64),
         tokenId: s(b && b.tokenId, 80),
         tx: s(b && b.tx, 80),
-      }))
+      })).filter((b) => txOk(b.tx))
     : [];
 
   // Resolve the real collection name from the contract (so it never stores "your bag").
