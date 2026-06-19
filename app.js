@@ -192,33 +192,26 @@ const CAUSES = [
 const STATUS = ["still coping", "financially deceased", "down bad", "in the trenches", "permanently underwater"];
 let exhibitSeed = 420;
 
-function renderExhibit() {
-  const id = exhibitSeed;
-  const cause = pick(rng(id * 7331), CAUSES);
-  const status = pick(rng(id * 911), STATUS);
-  const econ = previewEconomics(id);
-  $("#featPepe").innerHTML = buildPepe(id, 420);
-  $("#featName").textContent = `Preview #${String(id).padStart(4, "0")}`;
-  $("#featCause").textContent = cause;
-  $("#featMint").textContent = ethShort(econ.mint);
-  $("#featFloor").textContent = `${ethShort(econ.floor)} (-${econ.drop.toFixed(1)}%)`;
-  $("#featStatus").textContent = status;
-}
-function initExhibit() {
-  renderExhibit();
-  $("#featNext").onclick = () => {
-    exhibitSeed = Math.floor(rng(exhibitSeed * 2654435761 + 17)() * BRAND.supply) + 1;
-    renderExhibit();
-  };
+/* ----------------------------- COLLECTION GALLERY (real art) ----------------------------- */
+const GALLERY_COUNT = 13;
+const galleryImg = (n) => `/assets/gallery/${String(n).padStart(2, "0")}.png`;
+
+function initGallery() {
+  const wrap = $("#gallery"); if (!wrap) return;
+  let html = "";
+  for (let n = 1; n <= GALLERY_COUNT; n++) {
+    const id = String(((n * 743) % 9900) + 100).padStart(4, "0");
+    html += `<figure class="gcard"><img src="${galleryImg(n)}" loading="lazy" alt="NGMI Pepe #${id}" /><figcaption>EXIT #${id}<span class="down"> · not minted</span></figcaption></figure>`;
+  }
+  wrap.innerHTML = html;
 }
 
-/* ----------------------------- HERO ART ----------------------------- */
+/* ----------------------------- HERO ART (real art) ----------------------------- */
 function initHeroArt() {
-  const id = 420;
-  const hero = $("#heroPepe");
-  // keep the RUGGED stamp overlay that lives in the HTML
-  hero.insertAdjacentHTML("afterbegin", buildPepe(id, 360));
-  $("#heroLoss").textContent = `floor -${previewEconomics(id).drop.toFixed(1)}%`;
+  const img = $("#heroImg");
+  if (img) img.src = galleryImg(1 + Math.floor(Math.random() * GALLERY_COUNT));
+  const loss = $("#heroLoss");
+  if (loss) loss.textContent = `floor -${(96 + Math.random() * 3.7).toFixed(1)}%`;
 }
 
 /* ----------------------------- FAQ ----------------------------- */
@@ -1196,6 +1189,30 @@ function initCountUp() {
   io.observe(el.closest(".report") || el);
 }
 
+/* ----------------------------- CLEAN-URL ROUTER -----------------------------
+   Homepage sections get real paths (/manifesto, /collection, ...) instead of #hash.
+   In-page clicks scroll + pushState; direct loads / back-button jump to the section. */
+const ROUTES = { "/manifesto": "manifesto", "/collection": "collection", "/receipts": "receipts", "/roadmap": "roadmap", "/faq": "faq", "/whitelist": "wl" };
+function scrollToRoute(path, smooth) {
+  const id = ROUTES[path];
+  const el = id && document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+  else window.scrollTo({ top: 0, behavior: smooth ? "smooth" : "auto" });
+}
+function initRouter() {
+  if (ROUTES[location.pathname]) requestAnimationFrame(() => scrollToRoute(location.pathname, false));
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("a[data-route]");
+    if (!a) return;
+    const url = new URL(a.href, location.origin);
+    if (url.origin !== location.origin || ROUTES[url.pathname] === undefined) return;
+    e.preventDefault();
+    history.pushState(null, "", url.pathname);
+    scrollToRoute(url.pathname, true);
+  });
+  window.addEventListener("popstate", () => scrollToRoute(location.pathname, true));
+}
+
 /* ----------------------------- BOOT ----------------------------- */
 document.addEventListener("DOMContentLoaded", async () => {
   document.body.classList.add("js");
@@ -1205,11 +1222,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   initHeroArt();
   initMint();
-  initExhibit();
+  initGallery();
   initFaq();
   initReveal();
   initTilt();
   initCountUp();
+  initRouter();
 
   // Every whitelist button leaves the homepage for the dedicated /apply page.
   $$(".js-wl, #wlBtn").forEach(b =>

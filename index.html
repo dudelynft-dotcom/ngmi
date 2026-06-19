@@ -14,23 +14,23 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=24" />
+  <link rel="stylesheet" href="styles.css?v=25" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0b'/><text x='50' y='72' font-size='62' font-family='monospace' font-weight='bold' fill='%23c6f24e' text-anchor='middle'>N</text></svg>" />
 </head>
 <body>
 
   <!-- Nav -->
   <header class="nav">
-    <a class="nav__brand" href="#top">
+    <a class="nav__brand" href="/">
       <span class="nav__mark">NG</span><span class="nav__name">MI</span>
     </a>
     <nav class="nav__links">
-      <a href="#manifesto">Manifesto</a>
-      <a href="#receipts">Receipts</a>
-      <a href="#evidence">Evidence</a>
+      <a href="/manifesto" data-route>Manifesto</a>
+      <a href="/collection" data-route>Collection</a>
+      <a href="/receipts" data-route>Receipts</a>
+      <a href="/roadmap" data-route>Roadmap</a>
       <a href="/ruglist">Ruglist</a>
-      <a href="#wl">Whitelist</a>
-      <a href="#faq">FAQ</a>
+      <a href="/faq" data-route>FAQ</a>
     </nav>
     <button class="btn btn--accent js-wl" id="navWl">Join Whitelist →</button>
   </header>
@@ -55,6 +55,7 @@
 
       <aside class="hero__art">
         <figure class="evidence-card" id="heroPepe">
+          <img class="evidence-card__img" id="heroImg" alt="NGMI Pepe" />
           <span class="evidence-card__stamp">RUGGED</span>
         </figure>
         <div class="evidence-card__plate">
@@ -104,20 +105,40 @@
     <section class="section" id="manifesto">
       <div class="section__head">
         <span class="section__kick">// THE WHITEPAPER</span>
-        <h2 class="section__title">Four things, then mint</h2>
+        <h2 class="section__title">Read this, beggar</h2>
       </div>
       <ol class="manifesto">
         <li>
           <span class="manifesto__n">01</span>
           <div>
-            <h3>No utility. We mean it.</h3>
-            <p>No staking, no game, no "ecosystem", no token. The contract has no hidden mint, no
-              metadata swap, no transfer block, because there's nothing to drain. It's a frog that
-              looks how your portfolio feels. That's the utility.</p>
+            <h3>"Is it free?" Listen to yourself.</h3>
+            <p>You found a 10,000-piece collection and your very first thought was how to pay nothing
+              for it. Grown adult, refreshing for a freebie like a raccoon at a dumpster. You are not
+              an investor. You are a coupon with a wallet. We see you.</p>
           </div>
         </li>
         <li>
           <span class="manifesto__n">02</span>
+          <div>
+            <h3>Free mints made your JPEGs worthless.</h3>
+            <p>Remember when NFTs meant something? Then you and ten thousand other gas-goblins demanded
+              everything for free, minted 50 copies of every dog-coin frog, dumped them all in the same
+              hour, and acted shocked when the floor hit zero. You didn't get rugged by the devs. You
+              got rugged by your own cheap, greedy little hands. Today every collection is dust because
+              of exactly you.</p>
+          </div>
+        </li>
+        <li>
+          <span class="manifesto__n">03</span>
+          <div>
+            <h3>No utility. We mean it.</h3>
+            <p>No staking, no game, no "ecosystem", no token. The contract has no hidden mint, no
+              metadata swap, no transfer block, because there's nothing to drain. It's a frog that
+              looks how your portfolio feels. That's the utility. If you wanted more, get a job, not a JPEG.</p>
+          </div>
+        </li>
+        <li>
+          <span class="manifesto__n">04</span>
           <div>
             <h3>The floor is a vibe, not a price.</h3>
             <p>It's going to zero, possibly before you finish this sentence. There's no roadmap to
@@ -126,7 +147,7 @@
           </div>
         </li>
         <li>
-          <span class="manifesto__n">03</span>
+          <span class="manifesto__n">05</span>
           <div>
             <h3>Anon. Obviously.</h3>
             <p>You watched what happened to the doxxed devs. So did we. We learned from the best -
@@ -134,11 +155,13 @@
           </div>
         </li>
         <li>
-          <span class="manifesto__n">04</span>
+          <span class="manifesto__n">06</span>
           <div>
-            <h3>You're going to mint anyway.</h3>
-            <p>You read a manifesto that openly mocks you and your cursor is already drifting toward
-              the button. NGMI, and we respect it. Welcome home.</p>
+            <h3>You're going to mint anyway. Beggar.</h3>
+            <p>We just spent five paragraphs calling you broke, cheap, and personally responsible for
+              the death of NFTs, and your cursor is already drifting toward the button to check if it's
+              free. It might be. It might cost $69 five minutes before launch. Either way you're in,
+              because you have learned nothing. NGMI, and we respect it. Welcome home.</p>
           </div>
         </li>
       </ol>
@@ -189,28 +212,17 @@
       <p class="proof__fine">Dramatized reconstruction. It's a parody. But this is exactly how it goes, every time.</p>
     </section>
 
-    <!-- Evidence / single feature art -->
-    <section class="section section--evidence" id="evidence">
+    <!-- Collection: the real generated art -->
+    <section class="section section--collection" id="collection">
       <div class="section__head">
         <span class="section__kick">// THE COLLECTION · PREVIEW</span>
         <h2 class="section__title">10,000 incoming. None minted yet.</h2>
-        <p class="section__lead">Mint isn't live. This is a preview of what you'll be holding: each
-          Pepe is procedurally generated from a unique seed and a unique way of getting ruined.
-          The full 10,000 drop on OpenSea once the whitelist closes.</p>
+        <p class="section__lead">A preview of what you'll be left holding. Each one a hand-rugged Pepe,
+          freshly generated and already worthless in spirit. The full 10,000 drop on OpenSea once the
+          whitelist closes - if it ever does. The mint is not live. Stop refreshing.</p>
       </div>
-      <div class="exhibit">
-        <figure class="exhibit__art" id="featPepe"></figure>
-        <div class="exhibit__file">
-          <div class="exhibit__tag">PREVIEW · NOT MINTED</div>
-          <h3 id="featName">Preview #0420</h3>
-          <dl class="filerow"><dt>Planned cause of death</dt><dd id="featCause">roadmap abandoned at ATH</dd></dl>
-          <dl class="filerow"><dt>Swept high</dt><dd id="featMint">0.69 ETH</dd></dl>
-          <dl class="filerow"><dt>Floor now</dt><dd class="down" id="featFloor">0.0009 ETH (-99.9%)</dd></dl>
-          <dl class="filerow"><dt>Status at mint</dt><dd id="featStatus">already coping</dd></dl>
-          <dl class="filerow"><dt>Mint</dt><dd>not live (soon)</dd></dl>
-          <button class="btn btn--ghost" id="featNext">Preview another →</button>
-        </div>
-      </div>
+      <div class="gallery" id="gallery"><!-- filled by app.js --></div>
+      <p class="proof__fine">Preview samples from the 10,000. Mint is not live. These are not for sale yet. Calm down.</p>
     </section>
 
     <!-- Roadmap -->
@@ -218,19 +230,22 @@
       <div class="section__head">
         <span class="section__kick">// THE PLAN</span>
         <h2 class="section__title">Roadmap</h2>
+        <p class="section__lead">Important: the sale is <strong>not live</strong>. Nothing has minted. There
+          is nothing to buy. And we are <em>already</em> this confident about how it ends for you. That's
+          not a roadmap, that's a forecast.</p>
       </div>
       <div class="road">
-        <div class="road__item done">
+        <div class="road__item">
           <span class="road__phase">P1</span>
-          <div><h3>You buy</h3><p>You ape in because a frog with a knife in its back spoke to you on a spiritual level.</p></div>
+          <div><h3>You buy (nothing, yet)</h3><p>Sale isn't live, so for now you just sit here refreshing, whispering "is it free." It is not, yet. It is not, anything, yet.</p></div>
         </div>
-        <div class="road__item done">
+        <div class="road__item">
           <span class="road__phase">P2</span>
-          <div><h3>Number goes up (briefly)</h3><p>For roughly 40 minutes you are a genius. You tell the group chat. You screenshot it.</p></div>
+          <div><h3>Number goes up (briefly)</h3><p>The second it mints, for roughly 40 minutes you are a genius. You tell the group chat. You screenshot it. Frame that screenshot.</p></div>
         </div>
         <div class="road__item active">
           <span class="road__phase">P3</span>
-          <div><h3>We sell</h3><p>We're doing this part right now. Look at the chart. Yeah. That was us. Thanks ser.</p></div>
+          <div><h3>We sell</h3><p>The instant the sale you keep asking about goes live, this happens. Look at the chart. Yeah. That was us. Thanks ser.</p></div>
         </div>
         <div class="road__item">
           <span class="road__phase">P4</span>
@@ -264,10 +279,11 @@
     <div class="footer__top">
       <div class="footer__brand"><span class="nav__mark">NG</span>MI</div>
       <div class="footer__links">
-        <a href="#manifesto">Manifesto</a>
-        <a href="#wl">Whitelist</a>
-        <a href="#faq">FAQ</a>
-        <a href="#top">Mint</a>
+        <a href="/manifesto" data-route>Manifesto</a>
+        <a href="/collection" data-route>Collection</a>
+        <a href="/roadmap" data-route>Roadmap</a>
+        <a href="/ruglist">Ruglist</a>
+        <a href="/faq" data-route>FAQ</a>
       </div>
     </div>
     <p class="footer__disclaimer">
@@ -291,6 +307,6 @@
 
   <div class="toast" id="toast" aria-live="polite"></div>
 
-  <script src="app.js?v=24"></script>
+  <script src="app.js?v=25"></script>
 </body>
 </html>
