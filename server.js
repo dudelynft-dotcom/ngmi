@@ -78,7 +78,7 @@ const sql = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : null;
 
 // Race a DB call against a short timeout so a slow/unreachable Neon falls back to
 // the JSON file fast instead of hanging the request.
-const DB_TIMEOUT_MS = Number(process.env.DB_TIMEOUT_MS) || 1500;
+const DB_TIMEOUT_MS = Number(process.env.DB_TIMEOUT_MS) || 8000;
 function dbTry(fn, ms = DB_TIMEOUT_MS) {
   return Promise.race([
     fn(),
@@ -93,8 +93,15 @@ const tsql = sql ? (strings, ...values) => dbTry(() => sql(strings, ...values)) 
 let neonDownUntil = 0;
 const neonUp = () => Boolean(tsql) && Date.now() >= neonDownUntil;
 function neonFailed(e) {
-  neonDownUntil = Date.now() + 30000;
-  console.error("Neon unavailable -> using JSON file for 30s:", e && e.message);
+  neonDownUntil = Date.now() + 8000;
+  console.error("Neon unavailable -> using JSON file for 8s:", e && e.message);
+}
+
+// Read from Neon with one retry before giving up (absorbs cold-start blips so we never
+// serve a false-empty fallback when the data actually lives in Neon).
+async function neonRead(fn) {
+  try { return await dbTry(fn); }
+  catch (e1) { return await dbTry(fn); }   // one retry; throws to caller if it also fails
 }
 
 async function initDb() {
@@ -245,14 +252,15 @@ app.post("/auth/logout", (req, res) => {
 
 /* --- 3a. The logged-in user's own application (if any) --------- */
 app.get("/api/whitelist/me", async (req, res) => {
+  res.set("Cache-Control", "no-store");
   const user = req.session.user;
   if (!user) return res.status(401).json({ ok: false, error: "Login first." });
   if (neonUp()) {
     try {
-      const rows = await tsql`
+      const rows = await neonRead(() => sql`
         SELECT spot, handle, lost_usd, cope, nft_ath, approval, status, burn_count, burns, chain_id, shame_tweet,
                extract(epoch from updated_at)::bigint AS ts
-        FROM whitelist WHERE user_id = ${user.id} LIMIT 1`;
+        FROM whitelist WHERE user_id = ${user.id} LIMIT 1`);
       return res.json({ ok: true, application: rows[0] || null });
     } catch (e) { neonFailed(e); }
   }
@@ -262,9 +270,10 @@ app.get("/api/whitelist/me", async (req, res) => {
 
 /* --- 3b. Public whitelist count (for the live counter) --------- */
 app.get("/api/whitelist/count", async (req, res) => {
+  res.set("Cache-Control", "no-store");
   if (neonUp()) {
     try {
-      const rows = await tsql`SELECT count(*)::int AS n FROM whitelist`;
+      const rows = await neonRead(() => sql`SELECT count(*)::int AS n FROM whitelist`);
       return res.json({ count: rows[0].n, supply: 10000 });
     } catch (e) { neonFailed(e); }
   }
@@ -273,9 +282,10 @@ app.get("/api/whitelist/count", async (req, res) => {
 
 /* --- 3d. Public ruglist: every NFT burned, by whom -------------- */
 app.get("/api/ruglist", async (req, res) => {
+  res.set("Cache-Control", "no-store");
   if (neonUp()) {
     try {
-      const rows = await tsql`
+      const rows = await neonRead(() => sql`
         SELECT handle,
                b->>'projectName' AS collection,
                b->>'tokenId'     AS token_id,
@@ -285,7 +295,7 @@ app.get("/api/ruglist", async (req, res) => {
                extract(epoch from updated_at)::bigint AS ts
         FROM whitelist, jsonb_array_elements(burns) AS b
         ORDER BY updated_at DESC
-        LIMIT 500`;
+        LIMIT 500`);
       return res.json({ ok: true, count: rows.length, rows });
     } catch (e) { neonFailed(e); }
   }
