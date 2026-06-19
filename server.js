@@ -264,7 +264,9 @@ app.get("/api/whitelist/me", async (req, res) => {
       return res.json({ ok: true, application: rows[0] || null });
     } catch (e) { neonFailed(e); }
   }
-  const row = readWhitelist().find((e) => e.userId === user.id) || null;
+  const list = readWhitelist();
+  if (sql && list.length === 0) return res.status(503).json({ ok: false, warming: true, error: "Database warming up." });
+  const row = list.find((e) => e.userId === user.id) || null;
   res.json({ ok: true, application: fileEntryToApi(row) });
 });
 
@@ -277,7 +279,10 @@ app.get("/api/whitelist/count", async (req, res) => {
       return res.json({ count: rows[0].n, supply: 10000 });
     } catch (e) { neonFailed(e); }
   }
-  res.json({ count: readWhitelist().length, supply: 10000 });
+  // Neon is the store but unreachable + no local file data => warming up, not "0".
+  const list = readWhitelist();
+  if (sql && list.length === 0) return res.status(503).json({ warming: true, supply: 10000 });
+  res.json({ count: list.length, supply: 10000 });
 });
 
 /* --- 3d. Public ruglist: every NFT burned, by whom -------------- */
@@ -300,6 +305,7 @@ app.get("/api/ruglist", async (req, res) => {
     } catch (e) { neonFailed(e); }
   }
   const list = readWhitelist();
+  if (sql && list.length === 0) return res.status(503).json({ ok: false, warming: true, error: "Database warming up." });
   const rows = [];
   for (const e of list) for (const b of (e.burns || [])) {
     rows.push({ handle: e.handle, collection: b.projectName, token_id: b.tokenId, contract: b.contract, tx: b.tx, chain_id: e.chainId, ts: 0 });

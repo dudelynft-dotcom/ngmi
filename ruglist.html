@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=21" />
+  <link rel="stylesheet" href="styles.css?v=23" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0b'/><text x='50' y='72' font-size='62' font-family='monospace' font-weight='bold' fill='%23c6f24e' text-anchor='middle'>N</text></svg>" />
   <style>
     .rug { max-width: 1100px; margin: 0 auto; padding: 28px clamp(16px,4vw,40px) 90px; }
@@ -71,12 +71,22 @@
     const txUrl = (tx, chain) => (EXPLORERS[chain] || "https://etherscan.io") + "/tx/" + tx;
     const shortId = (id) => { id = String(id || ""); return id.length > 12 ? id.slice(0, 12) + "..." : id; };
 
+    let warmTries = 0;
     async function load() {
       try {
-        const r = await fetch("/api/ruglist");
-        const d = await r.json();
+        const r = await fetch("/api/ruglist", { cache: "no-store" });
+        const d = await r.json().catch(() => ({}));
+        if (r.status === 503 || d.warming) {           // DB waking up - retry, don't show "nobody burned"
+          warmTries++;
+          $("#list").innerHTML = `<div class="rug__empty">Waking the database${".".repeat((warmTries % 3) + 1)}</div>`;
+          return setTimeout(load, 2000);
+        }
+        warmTries = 0;
         render(d.rows || [], d.count || 0);
-      } catch (e) { $("#list").innerHTML = `<div class="rug__empty">Could not load the ruglist. ${esc(e.message)}</div>`; }
+      } catch (e) {
+        $("#list").innerHTML = `<div class="rug__empty">Reconnecting...</div>`;
+        setTimeout(load, 2500);
+      }
     }
 
     function render(rows, count) {

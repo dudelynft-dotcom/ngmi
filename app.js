@@ -1048,18 +1048,31 @@ async function initApplyPage() {
   WL.handle = "@" + APP.user.username;
   // Already applied? Show their status + details instead of the form again.
   const existing = await fetchMyApplication();
+  if (existing === "warming") {
+    // DB still waking after retries - show a wait screen and re-check, never a blank form.
+    const stage = $("#applyStage");
+    if (stage) stage.innerHTML = `<div class="apply__card"><span class="step__kicker">One sec</span><h2 class="step__title">Waking the database...</h2><p class="step__desc">Checking your existing application. This takes a moment on a cold start.</p></div>`;
+    return void setTimeout(() => initApplyPage(), 2500);
+  }
   if (existing) stepStatus(existing);
   else stepConfess();
 }
 
-async function fetchMyApplication() {
+// Returns the user's application, or the string "warming" if the DB is briefly
+// unreachable - so callers never mistake a cold DB for "no application" and re-show the form.
+async function fetchMyApplication(tries = 4) {
   if (!APP.backend) return null;
-  try {
-    const r = await fetch("/api/whitelist/me", { headers: { Accept: "application/json" } });
-    if (!r.ok) return null;
-    const d = await r.json();
-    return d.application || null;
-  } catch { return null; }
+  for (let i = 0; i < tries; i++) {
+    try {
+      const r = await fetch("/api/whitelist/me", { headers: { Accept: "application/json" }, cache: "no-store" });
+      if (r.status === 401) return null;                 // genuinely logged out / no app
+      const d = await r.json().catch(() => ({}));
+      if (r.status === 503 || d.warming) { await new Promise(s => setTimeout(s, 1500)); continue; }
+      if (!r.ok) return null;
+      return d.application || null;
+    } catch { await new Promise(s => setTimeout(s, 1500)); }
+  }
+  return "warming";   // DB still waking after retries - don't show a blank form
 }
 
 // Returning applicant: read-only status screen (pending / approved / rejected).
