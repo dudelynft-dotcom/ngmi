@@ -498,6 +498,14 @@ code { font-family: var(--mono); font-size: .9em; background: var(--paper-3); pa
 .gallery__more { display: block; margin: 18px auto 0; }
 .gallery__more[hidden] { display: none; }
 
+/* "Boost your odds" callout */
+.wl__bonus { background: var(--ink); color: var(--paper); border: 2px solid var(--acid); border-radius: 4px; padding: 16px 18px; margin: 22px 0 12px; max-width: 660px; box-shadow: 6px 6px 0 var(--acid); }
+.wl__bonus-tag { display: inline-block; font-family: var(--mono); font-weight: 700; font-size: 11px; letter-spacing: .06em; background: var(--acid); color: var(--acid-ink); padding: 2px 9px; border-radius: 2px; margin-bottom: 9px; }
+.wl__bonus p { margin: 0; font-size: 15px; line-height: 1.55; }
+.wl__bonus b { color: var(--acid); }
+.bonus-line { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; background: rgba(198,242,78,.18); border-left: 3px solid var(--acid); padding: 10px 12px; margin: 0 0 16px; border-radius: 0 3px 3px 0; }
+.bonus-line b { color: var(--acid-ink); }
+
 @media (max-width: 920px) {
   /* Hamburger nav: brand + CTA + toggle on one row, links drop down when opened */
   .nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
