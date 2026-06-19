@@ -1001,6 +1001,7 @@ async function initApplyPage() {
   if (stage) stage.innerHTML = `<div class="apply__card"><span class="step__kicker">Initiation</span><h2 class="step__title">Loading...</h2><p class="step__desc">Pulling up the receipts on your bad decisions.</p></div>`;
   await checkAuth();
   setNavUser();
+  initNavToggle();
 
   // Surface any OAuth error passed back on the redirect.
   const p = new URLSearchParams(location.search);
@@ -1236,6 +1237,17 @@ function initRouter() {
   window.addEventListener("popstate", () => scrollToRoute(location.pathname, true));
 }
 
+// Mobile hamburger: toggle the dropdown nav; close it when a link is tapped.
+function initNavToggle() {
+  const nav = document.querySelector(".nav"), tog = document.getElementById("navToggle");
+  if (!nav || !tog) return;
+  tog.addEventListener("click", () => {
+    const open = nav.classList.toggle("nav--open");
+    tog.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  nav.querySelectorAll(".nav__links a").forEach(a => a.addEventListener("click", () => nav.classList.remove("nav--open")));
+}
+
 /* ----------------------------- BOOT ----------------------------- */
 document.addEventListener("DOMContentLoaded", async () => {
   document.body.classList.add("js");
@@ -1251,6 +1263,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initTilt();
   initCountUp();
   initRouter();
+  initNavToggle();
 
   // Every whitelist button leaves the homepage for the dedicated /apply page.
   $$(".js-wl, #wlBtn").forEach(b =>
