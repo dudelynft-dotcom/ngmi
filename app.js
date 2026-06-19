@@ -715,6 +715,15 @@ function updateBurnBtn() {
   btn.textContent = n > 1 ? `Burn ${n} bags live` : "Burn selected live";
 }
 
+// Auto-detect a collection's name from its contract (server -> Alchemy), for manual burns.
+async function fetchCollectionMeta(contract, chainId) {
+  try {
+    const r = await fetch(`/api/collection-image?contract=${contract}&chainId=${chainId || "0x1"}`);
+    if (!r.ok) return {};
+    return await r.json();
+  } catch { return {}; }
+}
+
 async function burnExecute() {
   const ath = (($("#bAth") && $("#bAth").value) || "").trim();
   if (!ath) { toast("Required: enter the bag's ATH - it decides your odds."); if ($("#bAth")) $("#bAth").focus(); return; }
@@ -727,7 +736,8 @@ async function burnExecute() {
     if (!isAddress(contract)) { toast("Required: a valid contract address (0x + 40 hex)."); return; }
     if (!/^\d+$/.test(tokenId)) { toast("Required: token ID (a number)."); return; }
     WL.burnContract = contract; WL.burnTokenId = tokenId;
-    toBurn = [{ contract, tokenId, collection: "your bag" }];
+    const meta = await fetchCollectionMeta(contract, WL.chainId || "0x1");
+    toBurn = [{ contract, tokenId, collection: (meta && meta.name) || "your bag" }];
   } else {
     if (!burnState.selected.length) { toast("Required: select at least one NFT to burn."); return; }
     toBurn = burnState.selected.slice();

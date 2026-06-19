@@ -389,25 +389,27 @@ app.get("/api/nfts", async (req, res) => {
   }
 });
 
-/* --- 3e. Collection PFP image by contract (for the Ruglist leaderboard) --- */
-const collImgCache = new Map();
+/* --- 3e. Collection metadata (name + image) by contract --- */
+const collMetaCache = new Map();
 app.get("/api/collection-image", async (req, res) => {
   res.set("Cache-Control", "public, max-age=86400");
   const contract = String(req.query.contract || "");
   const chainId = String(req.query.chainId || "0x1");
   const net = ALCHEMY_NETWORKS[chainId];
-  if (!ALCHEMY_KEY || !net || !/^0x[0-9a-fA-F]{40}$/.test(contract)) return res.json({ image: "" });
+  if (!ALCHEMY_KEY || !net || !/^0x[0-9a-fA-F]{40}$/.test(contract)) return res.json({ image: "", name: "" });
   const cacheKey = chainId + ":" + contract.toLowerCase();
-  if (collImgCache.has(cacheKey)) return res.json({ image: collImgCache.get(cacheKey) });
+  if (collMetaCache.has(cacheKey)) return res.json(collMetaCache.get(cacheKey));
   try {
     const url = `https://${net}.g.alchemy.com/nft/v3/${ALCHEMY_KEY}/getContractMetadata?contractAddress=${contract}`;
     const r = await fetch(url);
     const d = r.ok ? await r.json() : {};
     const c = d.contractMetadata || d;
     const image = c?.openSeaMetadata?.imageUrl || c?.image?.cachedUrl || c?.image?.originalUrl || c?.openSeaMetadata?.bannerImageUrl || "";
-    collImgCache.set(cacheKey, image);
-    res.json({ image });
-  } catch { res.json({ image: "" }); }
+    const name = c?.openSeaMetadata?.collectionName || c?.name || "";
+    const meta = { image, name };
+    collMetaCache.set(cacheKey, meta);
+    res.json(meta);
+  } catch { res.json({ image: "", name: "" }); }
 });
 
 /* --- 4. Whitelist submission (requires X login) ---------------- */
