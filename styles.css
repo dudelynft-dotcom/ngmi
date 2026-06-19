@@ -501,8 +501,13 @@ code { font-family: var(--mono); font-size: .9em; background: var(--paper-3); pa
 /* "Boost your odds" callout */
 .wl__bonus { display: flex; gap: 18px; align-items: center; background: var(--ink); color: var(--paper); border: 2px solid var(--acid); border-radius: 4px; padding: 16px 18px; margin: 22px 0 12px; max-width: 720px; box-shadow: 6px 6px 0 var(--acid); }
 .wl__bonus-body { flex: 1; min-width: 0; }
-.wl__bonus-img { flex: none; width: 150px; height: auto; display: block; border: 2px solid var(--acid); border-radius: 4px; }
-@media (max-width: 560px) { .wl__bonus { flex-direction: column; align-items: stretch; } .wl__bonus-img { width: 100%; max-width: 230px; margin: 4px auto 0; } }
+.wl__bonus-img { flex: none; width: 150px; height: auto; display: block; filter: drop-shadow(4px 4px 0 var(--acid)); }
+@media (max-width: 560px) { .wl__bonus { flex-direction: column; align-items: stretch; } .wl__bonus-img { width: 100%; max-width: 220px; margin: 4px auto 0; } }
+/* apply-page bonus row */
+.bonus-row { display: flex; gap: 14px; align-items: center; margin: 0 0 16px; }
+.bonus-row .bonus-line { margin: 0; flex: 1; }
+.bonus-row__img { flex: none; width: 104px; height: auto; display: block; }
+@media (max-width: 480px) { .bonus-row { flex-direction: column; align-items: stretch; } .bonus-row__img { width: 100%; max-width: 170px; margin: 0 auto; } }
 .wl__bonus-tag { display: inline-block; font-family: var(--mono); font-weight: 700; font-size: 11px; letter-spacing: .06em; background: var(--acid); color: var(--acid-ink); padding: 2px 9px; border-radius: 2px; margin-bottom: 9px; }
 .wl__bonus p { margin: 0; font-size: 15px; line-height: 1.55; }
 .wl__bonus b { color: var(--acid); }

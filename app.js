@@ -493,8 +493,11 @@ function stepBurn() {
       rugged you, and send them to the dead address forever. We watch the chain confirm each burn in
       real time. <b>The more you burn, the higher your approval odds.</b></p>
 
-    <p class="bonus-line">Boost your odds: burn it <b>live</b> on stream or in a public road and tag
-      <b>@engmiHQ</b> in the video. Burn it <b>fully naked</b> and you skip review entirely - instant whitelist.</p>
+    <div class="bonus-row">
+      <p class="bonus-line">Boost your odds: burn it <b>live</b> on stream or in a public road and tag
+        <b>@engmiHQ</b> in the video. Burn it <b>fully naked</b> and you skip review entirely - instant whitelist.</p>
+      <img class="bonus-row__img" src="/assets/babe.png" alt="Bikini Pepe burning an NFT" />
+    </div>
 
     <div class="field">
       <label>Wallet</label>
