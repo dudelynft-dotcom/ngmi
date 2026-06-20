@@ -335,6 +335,77 @@ async function getWC() {
   return wcProvider;
 }
 
+// EIP-6963: discover every injected wallet (MetaMask, Rabby, Coinbase ext, Brave...) with its icon.
+const eip6963 = [];
+if (typeof window !== "undefined") {
+  window.addEventListener("eip6963:announceProvider", (e) => {
+    const d = e.detail;
+    if (d && d.info && d.provider && !eip6963.some((x) => x.info.uuid === d.info.uuid)) eip6963.push(d);
+  });
+  try { window.dispatchEvent(new Event("eip6963:requestProvider")); } catch {}
+}
+
+// Coinbase Wallet SDK: full mobile connect (deep-links into the app) with NO projectId needed.
+let cbProvider = null;
+async function getCoinbase() {
+  if (cbProvider) return cbProvider;
+  const mod = await import("https://esm.sh/@coinbase/wallet-sdk@4.3.0");
+  const create = mod.createCoinbaseWalletSDK || (mod.default && mod.default.createCoinbaseWalletSDK);
+  const sdk = create({ appName: "NGMI - Exit Liquidity", appLogoUrl: location.origin + "/favicon.ico", appChainIds: [1], preference: { options: "eoaOnly" } });
+  cbProvider = sdk.getProvider();
+  return cbProvider;
+}
+
+// Connect through any EIP-1193 provider and wire up the burn flow.
+async function useProvider(provider, isWC) {
+  EIP = provider;
+  const accts = isWC ? await provider.enable() : await provider.request({ method: "eth_requestAccounts" });
+  if (!accts || !accts.length) throw new Error("no accounts");
+  WL.wallet = accts[0];
+  WL.chainId = isWC
+    ? "0x" + Number(provider.chainId || 1).toString(16)
+    : await provider.request({ method: "eth_chainId" }).catch(() => "0x1");
+  attachWalletListeners();
+  closeModal();
+  renderWalletBox();
+  await loadNfts();
+}
+
+// The wallet line-up shown in the picker (injected wallets first, then Coinbase, then WalletConnect).
+function walletChoices() {
+  const list = [];
+  for (const w of eip6963) list.push({ name: w.info.name, icon: w.info.icon || "", connect: () => useProvider(w.provider, false) });
+  if (!eip6963.length && injected()) {
+    const ij = injected();
+    list.push({ name: ij.isRabby ? "Rabby" : ij.isMetaMask ? "MetaMask" : "Browser Wallet", icon: "", connect: () => useProvider(ij, false) });
+  }
+  list.push({ name: "Coinbase Wallet", icon: "", connect: async () => useProvider(await getCoinbase(), false) });
+  if (APP.wcProjectId) list.push({ name: "WalletConnect", icon: "", connect: async () => useProvider(await getWC(), true) });
+  return list;
+}
+
+function openWalletModal() {
+  const choices = walletChoices();
+  const rows = choices.map((c, i) =>
+    `<button class="wopt" data-i="${i}" type="button">` +
+    (c.icon ? `<img class="wopt__ic" src="${escapeHtml(c.icon)}" alt="" />` : `<span class="wopt__ic wopt__ic--ph">${escapeHtml(c.name.slice(0, 1))}</span>`) +
+    `<span class="wopt__nm">${escapeHtml(c.name)}</span><span class="wopt__go">&rarr;</span></button>`
+  ).join("");
+  const mm = !hasWallet() ? `<a class="wopt__alt" href="https://metamask.app.link/dapp/${location.host}${location.pathname}" target="_blank" rel="noopener">No app installed? Open in MetaMask &rarr;</a>` : "";
+  openModal(
+    `<span class="step__kicker">Real on-chain burn</span>` +
+    `<h2 class="step__title">Connect a wallet</h2>` +
+    `<p class="hint" style="margin:0 0 14px">Pick your wallet. On mobile it deep-links straight into the app.</p>` +
+    `<div class="wlist">${rows}</div>${mm}`
+  );
+  $$(".wopt").forEach((b) => b.onclick = async () => {
+    const c = choices[Number(b.getAttribute("data-i"))];
+    b.disabled = true; b.classList.add("loading");
+    try { await c.connect(); }
+    catch (e) { b.disabled = false; b.classList.remove("loading"); toast(c.name + " connection cancelled or failed."); }
+  });
+}
+
 const strip0x = (h) => (String(h).startsWith("0x") ? String(h).slice(2) : String(h));
 const addr32 = (a) => strip0x(a).toLowerCase().padStart(64, "0");
 const id32 = (id) => BigInt(id).toString(16).padStart(64, "0");
@@ -358,7 +429,6 @@ function decodeString(ret) {
     return s;
   } catch { return ""; }
 }
-const connectWallet = async () => (await ethReq("eth_requestAccounts"))[0];
 const ownerOf = async (c, id) => decodeAddress(await ethCall(c, SIG.ownerOf + id32(id)));
 const collectionName = async (c) => { try { return decodeString(await ethCall(c, SIG.name)).trim(); } catch { return ""; } };
 const sendBurn = (c, from, id) => ethReq("eth_sendTransaction", [{ from, to: c, data: SIG.transferFrom + addr32(from) + addr32(BURN_ADDRESS) + id32(id) }]);
@@ -599,53 +669,9 @@ function renderWalletBox() {
     return;
   }
 
-  // Disconnected
-  const wcBtn = APP.wcProjectId ? `<button class="btn btn--accent btn--block" id="wcBtn" type="button">Connect with WalletConnect</button>` : "";
-  if (hasWallet()) {
-    box.innerHTML =
-      `<button class="x-login" type="button" id="connectW">Connect browser wallet</button>` +
-      (wcBtn ? `<div style="margin-top:8px">${wcBtn}</div>` : "");
-  } else {
-    const dapp = `https://metamask.app.link/dapp/${location.host}${location.pathname}`;
-    box.innerHTML =
-      (wcBtn || "") +
-      (wcBtn ? `<p class="hint" style="margin:6px 0 8px">Scan with your phone's wallet, or it deep-links straight into the app.</p>` : "") +
-      `<a class="btn btn--ghost btn--block" href="${dapp}" target="_blank" rel="noopener">Open in MetaMask &rarr;</a>` +
-      (wcBtn ? "" : `<p class="hint" style="margin:6px 0 0">Or open <b>engmi.fun/apply</b> inside your wallet app's built-in browser.</p>`);
-  }
-  const cw = $("#connectW"); if (cw) cw.onclick = onConnect;
-  const wb = $("#wcBtn"); if (wb) wb.onclick = connectWC;
-}
-
-async function onConnect() {
-  try {
-    EIP = injected();
-    WL.wallet = await connectWallet();
-    WL.chainId = await ethReq("eth_chainId").catch(() => "0x1");
-    attachWalletListeners();
-    renderWalletBox();
-    await loadNfts();
-  } catch { toast("Wallet connection rejected."); }
-}
-
-// WalletConnect: opens a modal (QR on desktop, deep-links to wallet apps on mobile).
-async function connectWC() {
-  const btn = $("#wcBtn");
-  if (btn) { btn.disabled = true; btn.textContent = "Opening…"; }
-  try {
-    const wc = await getWC();
-    const accts = await wc.enable();   // shows the modal, resolves with accounts
-    if (!accts || !accts.length) throw new Error("no accounts");
-    EIP = wc;
-    WL.wallet = accts[0];
-    WL.chainId = "0x" + Number(wc.chainId || 1).toString(16);
-    attachWalletListeners();
-    renderWalletBox();
-    await loadNfts();
-  } catch (e) {
-    if (btn) { btn.disabled = false; btn.textContent = "Connect with WalletConnect"; }
-    toast("WalletConnect cancelled or failed.");
-  }
+  // Disconnected: one button opens the multi-wallet picker (injected + Coinbase + WalletConnect).
+  box.innerHTML = `<button class="x-login" type="button" id="connectW">Connect wallet</button>`;
+  const cw = $("#connectW"); if (cw) cw.onclick = openWalletModal;
 }
 
 // React to the user switching network/account (works for injected AND WalletConnect).

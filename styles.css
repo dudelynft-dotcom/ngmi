@@ -260,6 +260,19 @@ code { font-family: var(--mono); font-size: .9em; background: var(--paper-3); pa
 .faqmini__q p { margin: 0; padding: 0 16px 14px; color: var(--ink-soft); font-size: 14.5px; line-height: 1.6; }
 .faqmini__q b { color: var(--ink); }
 
+/* Wallet picker modal (RainbowKit-style line-up, vanilla) */
+.wlist { display: grid; gap: 8px; }
+.wopt { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border: 2px solid var(--ink); border-radius: 6px; background: var(--paper-2); font-family: var(--font); font-weight: 800; font-size: 15px; color: var(--ink); cursor: pointer; transition: transform .1s, box-shadow .1s; }
+.wopt:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+.wopt:disabled { opacity: .55; cursor: default; }
+.wopt.loading .wopt__go { animation: spin 1s linear infinite; }
+.wopt__ic { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; flex: none; }
+.wopt__ic--ph { display: grid; place-items: center; background: var(--ink); color: var(--acid); font-family: var(--mono); font-weight: 700; font-size: 15px; }
+.wopt__nm { flex: 1; text-align: left; }
+.wopt__go { color: var(--ink-soft); font-family: var(--mono); }
+.wopt__alt { display: block; margin-top: 12px; font-family: var(--mono); font-size: 12px; color: var(--rug); text-align: center; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
 .proofgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 18px; }
 .dchat { background: #313338; border: 3px solid var(--ink); border-radius: 7px; box-shadow: var(--shadow); overflow: hidden; transform: rotate(-.5deg); transition: transform .2s, box-shadow .2s; }
 .dchat:nth-child(even) { transform: rotate(.6deg); }
