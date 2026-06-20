@@ -73,9 +73,10 @@
     function card(u, i) {
       const handle = String(u.handle || "").replace(/^@/, "");
       const rank = i + 1;
-      const pfp = u.avatar
-        ? `<img class="scard__pfp" src="${esc(big(u.avatar))}" alt="" loading="lazy" onerror="this.outerHTML='<div class=&quot;scard__pfp&quot;>${esc((u.name||handle||'?').slice(0,1).toUpperCase())}</div>'" />`
-        : `<div class="scard__pfp">${esc((u.name || handle || "?").slice(0, 1).toUpperCase())}</div>`;
+      const initial = esc((u.name || handle || "?").slice(0, 1).toUpperCase());
+      // Stored X avatar if we captured it, else resolve by handle (no auth) via unavatar, else the initial.
+      const src = u.avatar ? big(u.avatar) : `https://unavatar.io/twitter/${encodeURIComponent(handle)}?fallback=false`;
+      const pfp = `<img class="scard__pfp" src="${esc(src)}" alt="" loading="lazy" onerror="this.outerHTML='<div class=&quot;scard__pfp&quot;>${initial}</div>'" />`;
       const colls = (u.collections || []).filter(Boolean).slice(0, 4)
         .map(c => `<span class="scard__chip">${esc(c)}</span>`).join("");
       return `<div class="scard scard--${rank}">
@@ -86,7 +87,7 @@
           <a class="scard__handle" href="https://x.com/${esc(handle)}" target="_blank" rel="noopener">@${esc(handle)}</a>
           <div class="scard__meta">
             <div>burned<b class="down">${u.burn_count || 0}</b></div>
-            <div>followers<b>${num(u.followers)}</b></div>
+            <div>followers<b>${u.followers ? num(u.followers) : "—"}</b></div>
           </div>
           ${colls ? `<div class="scard__colls">${colls}</div>` : ""}
         </div>
