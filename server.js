@@ -424,15 +424,8 @@ app.get("/api/hallofshame", async (req, res) => {
     users.sort((a, b) => b.burn_count - a.burn_count || (b.followers || 0) - (a.followers || 0));
   }
   users = users.filter((u) => !isHidden(u.handle));
-  // Fill in any missing avatar/followers from X (app-only), bounded per request.
-  let budget = 40;
-  for (const u of users) {
-    if ((!u.avatar || !u.followers) && budget > 0) {
-      budget--;
-      const p = await getXProfile(u.handle).catch(() => null);
-      if (p) { if (!u.avatar) u.avatar = p.avatar; if (!u.followers) u.followers = p.followers; }
-    }
-  }
+  // Avatars resolve client-side (unavatar by handle); followers come from what we captured at
+  // apply time. No live X calls here - they were slow and the app-only token isn't available.
   res.set("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=300");
   res.json({ ok: true, count: users.length, rows: users });
 });
