@@ -98,11 +98,11 @@
       </div>`;
     }
 
-    async function load() {
+    async function load(bust) {
       try {
-        const r = await fetch("/api/hallofshame");
+        const r = await fetch("/api/hallofshame" + (bust ? "?t=" + Date.now() : ""));
         const d = await r.json().catch(() => ({}));
-        if (r.status === 503 || d.warming) { $("#empty").textContent = "Waking the database…"; return setTimeout(load, 2500); }
+        if (r.status === 503 || d.warming) { const e = $("#empty"); if (e) e.textContent = "Waking the database…"; return setTimeout(() => load(true), 2500); }
         const rows = d.rows || [];
         if (!rows.length) { $("#grid").innerHTML = `<div class="shame__empty">Nobody has burned a bag yet. The hall awaits its first fool.</div>`; return; }
         $("#grid").innerHTML = rows.map(card).join("");

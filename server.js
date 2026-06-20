@@ -375,7 +375,7 @@ app.get("/api/ruglist", async (req, res) => {
 /* The Rug Museum: every burn as a tile, with the burned NFT's image (backfilled on demand). */
 app.get("/api/rugmuseum", async (req, res) => {
   let rows = [];
-  if (neonUp()) {
+  if (sql) {
     try {
       rows = await neonRead(() => sql`
         SELECT handle,
@@ -412,7 +412,7 @@ app.get("/api/rugmuseum", async (req, res) => {
 /* Hall of Shame: every burner with their X profile (avatar, followers) and burn stats. */
 app.get("/api/hallofshame", async (req, res) => {
   let users = [];
-  if (neonUp()) {
+  if (sql) {
     try {
       users = await neonRead(() => sql`
         SELECT handle, name, avatar, COALESCE(followers, 0) AS followers, burn_count, status,

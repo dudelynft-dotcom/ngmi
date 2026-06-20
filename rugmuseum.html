@@ -131,11 +131,11 @@
       return el;
     }
 
-    async function load() {
+    async function load(bust) {
       try {
-        const r = await fetch("/api/rugmuseum");
+        const r = await fetch("/api/rugmuseum" + (bust ? "?t=" + Date.now() : ""));
         const d = await r.json().catch(() => ({}));
-        if (r.status === 503 || d.warming) return setTimeout(load, 2500);
+        if (r.status === 503 || d.warming) return setTimeout(() => load(true), 2500);
         const rows = (d.rows || []);
         $("#mCount").textContent = (d.count || rows.length).toLocaleString();
         $("#mSouls").textContent = new Set(rows.map(x => (x.handle || "").toLowerCase())).size.toLocaleString();
