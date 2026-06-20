@@ -25,7 +25,9 @@
     .scard--wl { border-color: var(--acid); box-shadow: 4px 4px 0 var(--acid); }
     .scard__wl { position: absolute; top: -9px; right: -9px; background: var(--acid); color: var(--acid-ink); font-family: var(--mono); font-weight: 700; font-size: 11px; letter-spacing: .04em; padding: 2px 9px; border: 2px solid var(--ink); border-radius: 20px; }
     .scard--1 .scard__rank, .scard--2 .scard__rank, .scard--3 .scard__rank { background: var(--rug); color: #fff; }
-    .scard__pfp { width: 58px; height: 58px; flex: none; border-radius: 50%; border: 2px solid var(--ink); object-fit: cover; background: var(--ink); display: grid; place-items: center; font-family: var(--poster); color: var(--acid); font-size: 24px; overflow: hidden; }
+    .scard__pfp { position: relative; width: 58px; height: 58px; flex: none; border-radius: 50%; border: 2px solid var(--ink); display: grid; place-items: center; font-family: var(--poster); color: #fff; font-size: 24px; overflow: hidden; }
+    .scard__pfp img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .2s; }
+    .scard__pfp img.on { opacity: 1; }
     .scard__main { min-width: 0; flex: 1; }
     .scard__name { font-family: var(--font); font-weight: 900; font-size: 15px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .scard__handle { font-family: var(--mono); font-size: 12px; color: #2563eb; text-decoration: none; }
@@ -70,15 +72,17 @@
     const $ = (s) => document.querySelector(s);
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
     const big = (u) => (u ? u.replace("_normal", "_400x400") : "");
+    const hue = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return h; };
     const num = (n) => { n = Number(n || 0); return n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, "") + "K" : String(n); };
 
     function card(u, i) {
       const handle = String(u.handle || "").replace(/^@/, "");
       const rank = i + 1;
       const initial = esc((u.name || handle || "?").slice(0, 1).toUpperCase());
-      // Stored X avatar if we captured it, else resolve by handle (no auth) via unavatar, else the initial.
+      // Colored initial-avatar shows instantly; the real X pfp (stored, or resolved by handle via
+      // unavatar) fades in on top when/if it loads. No black loading circles, ever.
       const src = u.avatar ? big(u.avatar) : `https://unavatar.io/twitter/${encodeURIComponent(handle)}?fallback=false`;
-      const pfp = `<img class="scard__pfp" src="${esc(src)}" alt="" loading="lazy" onerror="this.outerHTML='<div class=&quot;scard__pfp&quot;>${initial}</div>'" />`;
+      const pfp = `<div class="scard__pfp" style="background:hsl(${hue(handle || initial)},48%,42%)">${initial}<img src="${esc(src)}" alt="" loading="lazy" onload="this.classList.add('on')" onerror="this.remove()" /></div>`;
       const colls = (u.collections || []).filter(Boolean).slice(0, 4)
         .map(c => `<span class="scard__chip">${esc(c)}</span>`).join("");
       const wl = u.status === "approved" ? `<span class="scard__wl" title="Whitelisted">WL</span>` : "";
