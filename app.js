@@ -372,14 +372,27 @@ async function useProvider(provider, isWC) {
 }
 
 // The wallet line-up shown in the picker (injected wallets first, then Coinbase, then WalletConnect).
+const isMobileUA = () => /Android|iPhone|iPad|iPod/i.test((typeof navigator !== "undefined" && navigator.userAgent) || "");
 function walletChoices() {
   const list = [];
+  // Installed/injected wallets (desktop extensions, or a wallet app's in-app browser).
   for (const w of eip6963) list.push({ name: w.info.name, icon: w.info.icon || "", connect: () => useProvider(w.provider, false) });
   if (!eip6963.length && injected()) {
     const ij = injected();
     list.push({ name: ij.isRabby ? "Rabby" : ij.isMetaMask ? "MetaMask" : "Browser Wallet", icon: "", connect: () => useProvider(ij, false) });
   }
+  // Coinbase Wallet connects in-place on mobile via its own SDK (no projectId).
   list.push({ name: "Coinbase Wallet", icon: "", connect: async () => useProvider(await getCoinbase(), false) });
+  // On a mobile browser with no injected wallet, deep-link into the popular wallet apps
+  // (opens this dapp inside that wallet's browser, where it connects) - no WalletConnect needed.
+  if (isMobileUA() && !eip6963.length && !injected()) {
+    const host = location.host + location.pathname;
+    const full = encodeURIComponent(location.href);
+    list.push({ name: "MetaMask", icon: "", deeplink: `https://metamask.app.link/dapp/${host}` });
+    list.push({ name: "Trust Wallet", icon: "", deeplink: `https://link.trustwallet.com/open_url?coin_id=60&url=${full}` });
+    list.push({ name: "Rainbow", icon: "", deeplink: `https://rnbwapp.com/dapp?url=${full}` });
+  }
+  // WalletConnect (every other wallet via QR / deep-link) - only when a projectId is configured.
   if (APP.wcProjectId) list.push({ name: "WalletConnect", icon: "", connect: async () => useProvider(await getWC(), true) });
   return list;
 }
@@ -391,15 +404,15 @@ function openWalletModal() {
     (c.icon ? `<img class="wopt__ic" src="${escapeHtml(c.icon)}" alt="" />` : `<span class="wopt__ic wopt__ic--ph">${escapeHtml(c.name.slice(0, 1))}</span>`) +
     `<span class="wopt__nm">${escapeHtml(c.name)}</span><span class="wopt__go">&rarr;</span></button>`
   ).join("");
-  const mm = !hasWallet() ? `<a class="wopt__alt" href="https://metamask.app.link/dapp/${location.host}${location.pathname}" target="_blank" rel="noopener">No app installed? Open in MetaMask &rarr;</a>` : "";
   openModal(
     `<span class="step__kicker">Real on-chain burn</span>` +
     `<h2 class="step__title">Connect a wallet</h2>` +
     `<p class="hint" style="margin:0 0 14px">Pick your wallet. On mobile it deep-links straight into the app.</p>` +
-    `<div class="wlist">${rows}</div>${mm}`
+    `<div class="wlist">${rows}</div>`
   );
   $$(".wopt").forEach((b) => b.onclick = async () => {
     const c = choices[Number(b.getAttribute("data-i"))];
+    if (c.deeplink) { window.location.href = c.deeplink; return; }   // open this dapp inside the wallet's browser
     b.disabled = true; b.classList.add("loading");
     try { await c.connect(); }
     catch (e) { b.disabled = false; b.classList.remove("loading"); toast(c.name + " connection cancelled or failed."); }
