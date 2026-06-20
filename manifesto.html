@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=50" />
+  <link rel="stylesheet" href="styles.css?v=51" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0b'/><text x='50' y='72' font-size='62' font-family='monospace' font-weight='bold' fill='%23c6f24e' text-anchor='middle'>N</text></svg>" />
   <style>
     .mani { max-width: 900px; margin: 0 auto; padding: 26px clamp(16px,4vw,40px) 110px; }
@@ -19,6 +19,8 @@
     .mani__intro { color: var(--ink-soft); max-width: 680px; font-size: 16.5px; line-height: 1.62; margin: 0 0 6px; }
     .mani__intro b { color: var(--ink); }
     .mani__intro .down { color: var(--rug); font-weight: 700; }
+    .mani__also { font-family: var(--mono); font-size: 13px; color: var(--ink-soft); margin: 14px 0 0; }
+    .mani__also a { color: var(--rug); font-weight: 700; border-bottom: 2px solid var(--acid); text-decoration: none; }
 
     .arts { margin-top: 42px; }
     .art { display: grid; grid-template-columns: 92px 1fr; gap: 22px; padding: 32px 0; border-top: 2px solid var(--ink); }
@@ -51,11 +53,9 @@
       <a href="/">Home</a>
       <a href="/manifesto">Manifesto</a>
       <a href="/collection">Collection</a>
-      <a href="/receipts">Receipts</a>
       <a href="/ruglist">Ruglist</a>
       <a href="/tasks">Farm</a>
       <a href="/roadmap">Roadmap</a>
-      <a href="/faq">FAQ</a>
     </nav>
     <div class="nav__right">
       <span class="nav__user" id="navUser"></span>
@@ -70,6 +70,8 @@
       lights turned all the way up. Every other project in this space wrote a document to make you feel
       smart for buying. <b>We wrote one to make you feel seen for buying anyway.</b>
       <span class="down">Read it slowly. It is about you.</span></p>
+    <p class="mani__also">// while you're here: read <a href="/receipts">the receipts</a> (leaked team
+      chats - the rug, documented before it happens) and the <a href="/faq">FAQ</a> (the cope corner).</p>
 
     <div class="arts">
       <div class="art art--red">
@@ -279,6 +281,8 @@
         people planning to rug you.</b></p>
       <div class="mani__cta">
         <a class="btn btn--accent" href="/apply">Burn a bag, take the spot →</a>
+        <a class="btn btn--ghost" href="/receipts">The receipts</a>
+        <a class="btn btn--ghost" href="/faq">FAQ</a>
         <a class="btn btn--ghost" href="/roadmap">See how it ends</a>
       </div>
     </div>
@@ -303,7 +307,6 @@
       const nav = document.querySelector(".nav"), tog = $("#navToggle");
       if (!nav || !tog) return;
 { var __p = location.pathname; if (__p.length > 1 && __p.slice(-1) === "/") __p = __p.slice(0,-1); nav.querySelectorAll(".nav__links a").forEach(function(a){ if (a.getAttribute("href") === __p) a.classList.add("is-active"); }); }
-$ACTIVE
       tog.onclick = () => { const o = nav.classList.toggle("nav--open"); tog.setAttribute("aria-expanded", o ? "true" : "false"); };
       nav.querySelectorAll(".nav__links a").forEach(a => a.addEventListener("click", () => nav.classList.remove("nav--open")));
     })();
