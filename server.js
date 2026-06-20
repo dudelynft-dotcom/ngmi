@@ -433,8 +433,18 @@ app.get("/api/hallofshame", async (req, res) => {
     users.sort((a, b) => b.burn_count - a.burn_count || (b.followers || 0) - (a.followers || 0));
   }
   users = users.filter((u) => !isHidden(u.handle));
-  // Avatars resolve client-side (unavatar by handle); followers come from what we captured at
-  // apply time. No live X calls here - they were slow and the app-only token isn't available.
+  // Avatars resolve client-side (unavatar by handle). Followers come from apply-time capture.
+  // If an X_BEARER_TOKEN is configured, fill in missing follower counts (cached, bounded).
+  if (process.env.X_BEARER_TOKEN) {
+    let budget = 40;
+    for (const u of users) {
+      if (!u.followers && budget > 0) {
+        budget--;
+        const p = await getXProfile(u.handle).catch(() => null);
+        if (p) { if (!u.avatar) u.avatar = p.avatar; if (p.followers) u.followers = p.followers; }
+      }
+    }
+  }
   res.set("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=300");
   res.json({ ok: true, count: users.length, rows: users });
 });
@@ -538,6 +548,7 @@ async function getNFTImage(contract, tokenId, chainId) {
    Hall of Shame for people whose profile we didn't store at apply time. */
 let appBearer = null;
 async function getAppBearer() {
+  if (process.env.X_BEARER_TOKEN) return process.env.X_BEARER_TOKEN.trim();
   if (appBearer) return appBearer;
   if (!X_CLIENT_ID || !X_CLIENT_SECRET) return null;
   try {
