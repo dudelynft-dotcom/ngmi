@@ -279,7 +279,16 @@ app.get("/auth/x/callback", async (req, res) => {
 
 /* --- 3. Session helpers ---------------------------------------- */
 app.get("/auth/me", (req, res) => {
-  res.json({ configured: X_CONFIGURED, user: req.session.user || null });
+  const u = req.session.user;
+  // Backfill a returning burner's stored X profile from their live session (followers/avatar),
+  // so the Hall of Shame fills in for anyone who logs in. Fire-and-forget, only when we have data.
+  if (u && sql && (Number(u.followers) > 0 || u.avatar)) {
+    tsql`UPDATE whitelist SET
+           avatar = COALESCE(NULLIF(${u.avatar || ""}, ''), avatar),
+           followers = GREATEST(COALESCE(followers, 0), ${Number(u.followers) || 0})
+         WHERE user_id = ${u.id}`.catch(() => {});
+  }
+  res.json({ configured: X_CONFIGURED, user: u || null });
 });
 
 app.post("/auth/logout", (req, res) => {
@@ -406,7 +415,7 @@ app.get("/api/hallofshame", async (req, res) => {
   if (neonUp()) {
     try {
       users = await neonRead(() => sql`
-        SELECT handle, name, avatar, COALESCE(followers, 0) AS followers, burn_count,
+        SELECT handle, name, avatar, COALESCE(followers, 0) AS followers, burn_count, status,
                extract(epoch from updated_at)::bigint AS ts,
                (SELECT array_agg(DISTINCT bb->>'projectName') FROM jsonb_array_elements(burns) bb WHERE COALESCE(bb->>'projectName', '') <> '') AS collections
         FROM whitelist
@@ -418,7 +427,7 @@ app.get("/api/hallofshame", async (req, res) => {
     const list = readWhitelist();
     if (sql && !list.length) return res.status(503).json({ ok: false, warming: true });
     users = list.filter((e) => (e.burnCount || 0) > 0).map((e) => ({
-      handle: e.handle, name: e.name, avatar: e.avatar, followers: e.followers || 0, burn_count: e.burnCount,
+      handle: e.handle, name: e.name, avatar: e.avatar, followers: e.followers || 0, burn_count: e.burnCount, status: e.status,
       ts: 0, collections: [...new Set((e.burns || []).map((b) => b.projectName).filter(Boolean))],
     }));
     users.sort((a, b) => b.burn_count - a.burn_count || (b.followers || 0) - (a.followers || 0));

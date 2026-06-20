@@ -22,6 +22,8 @@
     .shame__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
     .scard { position: relative; display: flex; gap: 13px; align-items: center; border: 2px solid var(--ink); border-radius: 6px; background: var(--paper-2); padding: 14px; box-shadow: 4px 4px 0 var(--ink); }
     .scard__rank { position: absolute; top: -9px; left: -9px; background: var(--ink); color: var(--acid); font-family: var(--mono); font-weight: 700; font-size: 12px; padding: 2px 8px; border: 2px solid var(--ink); border-radius: 20px; }
+    .scard--wl { border-color: var(--acid); box-shadow: 4px 4px 0 var(--acid); }
+    .scard__wl { position: absolute; top: -9px; right: -9px; background: var(--acid); color: var(--acid-ink); font-family: var(--mono); font-weight: 700; font-size: 11px; letter-spacing: .04em; padding: 2px 9px; border: 2px solid var(--ink); border-radius: 20px; }
     .scard--1 .scard__rank, .scard--2 .scard__rank, .scard--3 .scard__rank { background: var(--rug); color: #fff; }
     .scard__pfp { width: 58px; height: 58px; flex: none; border-radius: 50%; border: 2px solid var(--ink); object-fit: cover; background: var(--ink); display: grid; place-items: center; font-family: var(--poster); color: var(--acid); font-size: 24px; overflow: hidden; }
     .scard__main { min-width: 0; flex: 1; }
@@ -79,8 +81,10 @@
       const pfp = `<img class="scard__pfp" src="${esc(src)}" alt="" loading="lazy" onerror="this.outerHTML='<div class=&quot;scard__pfp&quot;>${initial}</div>'" />`;
       const colls = (u.collections || []).filter(Boolean).slice(0, 4)
         .map(c => `<span class="scard__chip">${esc(c)}</span>`).join("");
-      return `<div class="scard scard--${rank}">
+      const wl = u.status === "approved" ? `<span class="scard__wl" title="Whitelisted">WL</span>` : "";
+      return `<div class="scard scard--${rank}${wl ? " scard--wl" : ""}">
         <span class="scard__rank">#${rank}</span>
+        ${wl}
         ${pfp}
         <div class="scard__main">
           <div class="scard__name">${esc(u.name || handle)}</div>
