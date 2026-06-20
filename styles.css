@@ -250,6 +250,16 @@ code { font-family: var(--mono); font-size: .9em; background: var(--paper-3); pa
 .footer__copy { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft); margin: 24px 0 0; }
 
 /* ---------- Receipts: fake Discord proof ---------- */
+/* Home FAQ teaser accordion (full page lives at /faq) */
+.faqmini { display: grid; gap: 8px; max-width: 720px; }
+.faqmini__q { border: 2px solid var(--ink); border-radius: 5px; background: var(--paper-2); }
+.faqmini__q > summary { list-style: none; cursor: pointer; padding: 13px 16px; font-family: var(--font); font-weight: 900; font-size: 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.faqmini__q > summary::-webkit-details-marker { display: none; }
+.faqmini__q > summary::after { content: "+"; font-family: var(--mono); color: var(--rug); font-size: 20px; line-height: 1; }
+.faqmini__q[open] > summary::after { content: "-"; }
+.faqmini__q p { margin: 0; padding: 0 16px 14px; color: var(--ink-soft); font-size: 14.5px; line-height: 1.6; }
+.faqmini__q b { color: var(--ink); }
+
 .proofgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 18px; }
 .dchat { background: #313338; border: 3px solid var(--ink); border-radius: 7px; box-shadow: var(--shadow); overflow: hidden; transform: rotate(-.5deg); transition: transform .2s, box-shadow .2s; }
 .dchat:nth-child(even) { transform: rotate(.6deg); }

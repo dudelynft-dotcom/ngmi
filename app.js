@@ -807,7 +807,7 @@ async function burnSelected(list) {
       const rc = await waitForReceipt(tx);
       if (!rc || rc.status === "0x0") { set("reverted", "skip"); continue; }
       set(`burned <a href="${explorerTx(tx, WL.chainId)}" target="_blank" rel="noopener">tx ↗</a>`, "ok");
-      done.push({ contract: n.contract, tokenId: n.tokenId, tx, projectName: pname, floor: n.floor ?? null });
+      done.push({ contract: n.contract, tokenId: n.tokenId, tx, projectName: pname, floor: n.floor ?? null, image: n.image || "" });
     } catch { set("cancelled", "skip"); }
   }
 
@@ -1222,7 +1222,7 @@ function dashboardMarkup(app) {
     <div class="dash__actions">
       <button class="btn btn--ghost" id="dashShare">Post my shame to X</button>
       ${approved ? "" : `<button class="btn btn--accent" id="dashBurnMore">${rejected ? "Burn more & resubmit" : "Burn more bags — raise your odds"}</button>`}
-      <a class="btn btn--ghost" href="/ruglist">The Ruglist</a>
+      <a class="btn btn--ghost" href="/rugmuseum">The Rug Museum</a>
       <a class="btn btn--ghost" href="/">Back to site</a>
     </div>
     <p class="dash__fine">Parody / satire. The numbers are fake, the rug is a bit, no mint is promised. Do not actually burn or buy anything.</p>

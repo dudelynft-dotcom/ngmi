@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NGMI - Hall of Shame</title>
+  <meta name="description" content="Every soul who burned an NFT to join NGMI. Names, faces, follower counts, body count." />
+  <meta property="og:title" content="NGMI - Hall of Shame" />
+  <meta property="og:description" content="The rugged, by name. Who burned what, and how many followers watched them do it." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=52" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0b'/><text x='50' y='72' font-size='62' font-family='monospace' font-weight='bold' fill='%23c6f24e' text-anchor='middle'>N</text></svg>" />
+  <style>
+    .shame { max-width: 1180px; margin: 0 auto; padding: 24px clamp(14px,4vw,40px) 90px; }
+    .shame__kick { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--rug); font-weight: 700; }
+    .shame__title { font-family: var(--poster); font-weight: 400; font-size: clamp(40px,8vw,80px); line-height: .88; margin: 6px 0 10px; text-transform: uppercase; }
+    .shame__lead { color: var(--ink-soft); max-width: 660px; font-size: 15px; line-height: 1.55; margin: 0 0 22px; }
+    .shame__lead b { color: var(--ink); }
+
+    .shame__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+    .scard { position: relative; display: flex; gap: 13px; align-items: center; border: 2px solid var(--ink); border-radius: 6px; background: var(--paper-2); padding: 14px; box-shadow: 4px 4px 0 var(--ink); }
+    .scard__rank { position: absolute; top: -9px; left: -9px; background: var(--ink); color: var(--acid); font-family: var(--mono); font-weight: 700; font-size: 12px; padding: 2px 8px; border: 2px solid var(--ink); border-radius: 20px; }
+    .scard--1 .scard__rank, .scard--2 .scard__rank, .scard--3 .scard__rank { background: var(--rug); color: #fff; }
+    .scard__pfp { width: 58px; height: 58px; flex: none; border-radius: 50%; border: 2px solid var(--ink); object-fit: cover; background: var(--ink); display: grid; place-items: center; font-family: var(--poster); color: var(--acid); font-size: 24px; overflow: hidden; }
+    .scard__main { min-width: 0; flex: 1; }
+    .scard__name { font-family: var(--font); font-weight: 900; font-size: 15px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .scard__handle { font-family: var(--mono); font-size: 12px; color: #2563eb; text-decoration: none; }
+    .scard__handle:hover { text-decoration: underline; }
+    .scard__meta { display: flex; gap: 14px; margin-top: 8px; }
+    .scard__meta div { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+    .scard__meta b { display: block; font-family: var(--poster); font-weight: 400; font-size: 19px; color: var(--ink); line-height: 1; }
+    .scard__meta .down { color: var(--rug); }
+    .scard__colls { margin-top: 9px; display: flex; gap: 5px; flex-wrap: wrap; }
+    .scard__chip { font-family: var(--mono); font-size: 10px; border: 1.5px solid var(--ink); border-radius: 20px; padding: 1px 8px; white-space: nowrap; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
+    .shame__empty { font-family: var(--mono); color: var(--ink-soft); padding: 50px 16px; text-align: center; }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <a class="nav__brand" href="/"><span class="nav__mark">NG</span><span class="nav__name">MI</span></a>
+    <nav class="nav__links">
+      <a href="/">Home</a>
+      <a href="/manifesto">Manifesto</a>
+      <a href="/collection">Collection</a>
+      <a href="/rugmuseum">Museum</a>
+      <a href="/hall-of-shame">Shame</a>
+      <a href="/tasks">Farm</a>
+      <a href="/roadmap">Roadmap</a>
+    </nav>
+    <div class="nav__right">
+      <span class="nav__user" id="navUser"></span>
+    </div>
+    <button class="nav__toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </header>
+
+  <main class="shame">
+    <span class="shame__kick">// THE RUGGED, BY NAME</span>
+    <h1 class="shame__title">Hall of Shame</h1>
+    <p class="shame__lead">Everyone who publicly burned an NFT to join NGMI - face, handle, follower
+      count, and body count. <b>They did this on purpose, in front of everyone.</b> Ranked by bags
+      incinerated.</p>
+    <div class="shame__grid" id="grid"><div class="shame__empty" id="empty">Loading the rugged…</div></div>
+  </main>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+    const big = (u) => (u ? u.replace("_normal", "_400x400") : "");
+    const num = (n) => { n = Number(n || 0); return n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, "") + "K" : String(n); };
+
+    function card(u, i) {
+      const handle = String(u.handle || "").replace(/^@/, "");
+      const rank = i + 1;
+      const pfp = u.avatar
+        ? `<img class="scard__pfp" src="${esc(big(u.avatar))}" alt="" loading="lazy" onerror="this.outerHTML='<div class=&quot;scard__pfp&quot;>${esc((u.name||handle||'?').slice(0,1).toUpperCase())}</div>'" />`
+        : `<div class="scard__pfp">${esc((u.name || handle || "?").slice(0, 1).toUpperCase())}</div>`;
+      const colls = (u.collections || []).filter(Boolean).slice(0, 4)
+        .map(c => `<span class="scard__chip">${esc(c)}</span>`).join("");
+      return `<div class="scard scard--${rank}">
+        <span class="scard__rank">#${rank}</span>
+        ${pfp}
+        <div class="scard__main">
+          <div class="scard__name">${esc(u.name || handle)}</div>
+          <a class="scard__handle" href="https://x.com/${esc(handle)}" target="_blank" rel="noopener">@${esc(handle)}</a>
+          <div class="scard__meta">
+            <div>burned<b class="down">${u.burn_count || 0}</b></div>
+            <div>followers<b>${num(u.followers)}</b></div>
+          </div>
+          ${colls ? `<div class="scard__colls">${colls}</div>` : ""}
+        </div>
+      </div>`;
+    }
+
+    async function load() {
+      try {
+        const r = await fetch("/api/hallofshame");
+        const d = await r.json().catch(() => ({}));
+        if (r.status === 503 || d.warming) { $("#empty").textContent = "Waking the database…"; return setTimeout(load, 2500); }
+        const rows = d.rows || [];
+        if (!rows.length) { $("#grid").innerHTML = `<div class="shame__empty">Nobody has burned a bag yet. The hall awaits its first fool.</div>`; return; }
+        $("#grid").innerHTML = rows.map(card).join("");
+      } catch { $("#grid").innerHTML = `<div class="shame__empty">Could not load. Refresh.</div>`; }
+    }
+    load();
+
+    (async () => {
+      try {
+        const r = await fetch("/auth/me", { headers: { Accept: "application/json" } });
+        if (!r.ok) return; const u = (await r.json()).user; if (!u) return;
+        const el = $("#navUser"); if (!el) return;
+        const txt = "@" + u.username;
+        const btn = document.createElement("button");
+        btn.type = "button"; btn.className = "nav__userbtn"; btn.title = "Copy username + open dashboard"; btn.textContent = txt;
+        btn.onclick = () => { (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => { btn.classList.add("copied"); btn.textContent = "copied ✓"; setTimeout(() => { window.location.href = "/apply"; }, 550); }).catch(() => { window.location.href = "/apply"; }); };
+        el.innerHTML = ""; el.appendChild(btn);
+      } catch {}
+    })();
+    (function () {
+      const nav = document.querySelector(".nav"), tog = $("#navToggle");
+      if (!nav || !tog) return;
+      let p = location.pathname; if (p.length > 1 && p.slice(-1) === "/") p = p.slice(0, -1);
+      nav.querySelectorAll(".nav__links a").forEach(a => { if (a.getAttribute("href") === p) a.classList.add("is-active"); });
+      tog.onclick = () => { const o = nav.classList.toggle("nav--open"); tog.setAttribute("aria-expanded", o ? "true" : "false"); };
+      nav.querySelectorAll(".nav__links a").forEach(a => a.addEventListener("click", () => nav.classList.remove("nav--open")));
+    })();
+  </script>
+</body>
+</html>

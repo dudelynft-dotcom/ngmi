@@ -4,7 +4,7 @@
     {
       "src": "server.js",
       "use": "@vercel/node",
-      "config": { "includeFiles": ["index.html", "apply.html", "admin.html", "ruglist.html", "tasks.html", "roadmap.html", "manifesto.html", "receipts.html", "collection.html", "faq.html", "styles.css", "app.js", "assets/gallery/**", "assets/babe.png"] }
+      "config": { "includeFiles": ["index.html", "apply.html", "admin.html", "ruglist.html", "rugmuseum.html", "hall-of-shame.html", "tasks.html", "roadmap.html", "manifesto.html", "receipts.html", "collection.html", "faq.html", "styles.css", "app.js", "assets/gallery/**", "assets/babe.png"] }
     }
   ],
   "routes": [{ "src": "/(.*)", "dest": "server.js" }]

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NGMI - The Rug Museum</title>
+  <meta name="description" content="A live map of every NFT burned to join NGMI. The rugged, on display, forever." />
+  <meta property="og:title" content="NGMI - The Rug Museum" />
+  <meta property="og:description" content="Every bag burned to get in, mapped in real time. A wall of the rugged." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=52" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0b'/><text x='50' y='72' font-size='62' font-family='monospace' font-weight='bold' fill='%23c6f24e' text-anchor='middle'>N</text></svg>" />
+  <style>
+    .museum { max-width: 1280px; margin: 0 auto; padding: 24px clamp(14px,4vw,40px) 80px; }
+    .museum__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 6px; }
+    .museum__head h1 { font-family: var(--poster); font-weight: 400; font-size: clamp(38px,7vw,68px); line-height: .9; margin: 0; text-transform: uppercase; }
+    .museum__head p { color: var(--ink-soft); max-width: 560px; margin: 8px 0 0; font-size: 15px; }
+    .museum__stats { display: flex; gap: 10px; flex-wrap: wrap; }
+    .mstat { border: 2px solid var(--ink); border-radius: 4px; background: var(--paper-2); padding: 7px 14px; font-family: var(--mono); font-size: 12px; text-align: right; }
+    .mstat b { display: block; font-family: var(--poster); font-weight: 400; font-size: 24px; line-height: 1; margin-top: 2px; }
+    .mstat .down { color: var(--rug); }
+    .museum__bar { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0; align-items: center; }
+    .museum__bar .hint { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); }
+    .pulse-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--rug); margin-right: 6px; box-shadow: 0 0 0 0 rgba(229,52,31,.6); animation: ppulse 1.5s infinite; vertical-align: middle; }
+    @keyframes ppulse { 0% { box-shadow: 0 0 0 0 rgba(229,52,31,.6); } 70% { box-shadow: 0 0 0 9px rgba(229,52,31,0); } 100% { box-shadow: 0 0 0 0 rgba(229,52,31,0); } }
+
+    .stage { position: relative; width: 100%; aspect-ratio: 16/10; min-height: 420px; border: 3px solid var(--ink); border-radius: 8px;
+      background: #0b0b0b radial-gradient(circle at 50% 45%, #19190f 0%, #0b0b0b 70%); overflow: hidden; box-shadow: 8px 8px 0 var(--ink); }
+    .stage__empty { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--mono); color: #6a6a5e; font-size: 14px; text-align: center; padding: 20px; }
+    .bubble { position: absolute; transform: translate(-50%,-50%) scale(0); border-radius: 50%; overflow: hidden; border: 2px solid var(--acid);
+      box-shadow: 0 3px 10px rgba(0,0,0,.5); cursor: pointer; background: #1b1b14; transition: transform .45s cubic-bezier(.2,1.3,.4,1), border-color .15s; will-change: transform; }
+    .bubble:hover { border-color: var(--rug); z-index: 5; }
+    .bubble.in { transform: translate(-50%,-50%) scale(1); }
+    .bubble img { width: 100%; height: 100%; object-fit: cover; display: block; image-rendering: pixelated; }
+    .bubble__ph { width: 100%; height: 100%; display: grid; place-items: center; font-family: var(--poster); color: #c6f24e; opacity: .8; }
+    .bubble:hover .tip { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .tip { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%) translateY(4px); opacity: 0; pointer-events: none;
+      background: var(--paper); color: var(--ink); border: 2px solid var(--ink); border-radius: 4px; padding: 6px 9px; white-space: nowrap;
+      font-family: var(--mono); font-size: 11px; transition: opacity .12s, transform .12s; z-index: 6; box-shadow: 3px 3px 0 var(--ink); }
+    .tip b { color: var(--rug); }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <a class="nav__brand" href="/"><span class="nav__mark">NG</span><span class="nav__name">MI</span></a>
+    <nav class="nav__links">
+      <a href="/">Home</a>
+      <a href="/manifesto">Manifesto</a>
+      <a href="/collection">Collection</a>
+      <a href="/rugmuseum">Museum</a>
+      <a href="/hall-of-shame">Shame</a>
+      <a href="/tasks">Farm</a>
+      <a href="/roadmap">Roadmap</a>
+    </nav>
+    <div class="nav__right">
+      <span class="nav__user" id="navUser"></span>
+    </div>
+    <button class="nav__toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </header>
+
+  <main class="museum">
+    <div class="museum__head">
+      <div>
+        <h1>The Rug Museum</h1>
+        <p>Every NFT burned to get into NGMI, on permanent display. Each bubble is a bag that already
+          rugged someone, now sent to the dead address forever.</p>
+      </div>
+      <div class="museum__stats">
+        <div class="mstat">Exhibits<b id="mCount" class="down">—</b></div>
+        <div class="mstat">Souls<b id="mSouls">—</b></div>
+      </div>
+    </div>
+    <div class="museum__bar">
+      <a class="btn btn--accent" href="/apply">Burn a bag, add it to the wall</a>
+      <a class="btn btn--ghost" href="/hall-of-shame">Hall of Shame →</a>
+      <span class="hint"><span class="pulse-dot"></span>live - new burns appear automatically</span>
+    </div>
+
+    <div class="stage" id="stage"><div class="stage__empty" id="stageEmpty">Warming the gallery…</div></div>
+  </main>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+    const short = (s) => { s = String(s || ""); return s.length > 8 ? s.slice(0, 8) : s; };
+
+    const stage = $("#stage");
+    const seen = new Set();         // tx|contract:token -> already placed
+    let items = [];                 // current full set (newest first)
+
+    function keyOf(r) { return (r.tx || "") + "|" + (r.contract || "") + ":" + (r.token_id || ""); }
+
+    // Golden-angle (phyllotaxis) packing -> an organic, dense bubble cluster.
+    function layout() {
+      const W = stage.clientWidth, H = stage.clientHeight;
+      const n = items.length;
+      if (!n) return;
+      const minSide = Math.min(W, H);
+      const size = Math.max(34, Math.min(86, minSide / Math.sqrt(n + 6) * 1.15));
+      const c = size * 0.62;                          // spiral spacing
+      const cx = W / 2, cy = H / 2;
+      const GA = Math.PI * (3 - Math.sqrt(5));         // golden angle
+      items.forEach((r, i) => {
+        const radius = c * Math.sqrt(i);
+        const a = i * GA;
+        const x = cx + radius * Math.cos(a);
+        const y = cy + radius * Math.sin(a);
+        const el = r._el;
+        const sz = i < 3 ? size * 1.25 : size;         // newest 3 a touch bigger
+        el.style.width = el.style.height = sz + "px";
+        el.style.left = x + "px";
+        el.style.top = y + "px";
+      });
+    }
+
+    function makeBubble(r) {
+      const el = document.createElement("div");
+      el.className = "bubble";
+      const coll = esc(r.collection || "Unknown");
+      const inner = r.image
+        ? `<img src="${esc(r.image)}" alt="" loading="lazy" onerror="this.parentNode.querySelector('.bubble__ph')?.removeAttribute('hidden');this.remove();" />`
+        : "";
+      el.innerHTML = `${inner}<div class="bubble__ph" ${r.image ? "hidden" : ""}>${coll.slice(0,1).toUpperCase()}</div>
+        <div class="tip"><b>${esc(r.handle || "")}</b> burned ${coll} #${esc(short(r.token_id))}</div>`;
+      if (r.tx && /^0x[0-9a-fA-F]{64}$/.test(r.tx)) el.onclick = () => window.open("https://etherscan.io/tx/" + r.tx, "_blank", "noopener");
+      r._el = el;
+      stage.appendChild(el);
+      requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("in")));
+      return el;
+    }
+
+    async function load() {
+      try {
+        const r = await fetch("/api/rugmuseum");
+        const d = await r.json().catch(() => ({}));
+        if (r.status === 503 || d.warming) return setTimeout(load, 2500);
+        const rows = (d.rows || []);
+        $("#mCount").textContent = (d.count || rows.length).toLocaleString();
+        $("#mSouls").textContent = new Set(rows.map(x => (x.handle || "").toLowerCase())).size.toLocaleString();
+        const fresh = rows.filter(x => !seen.has(keyOf(x)));
+        if (rows.length) { const e = $("#stageEmpty"); if (e) e.remove(); }
+        else { const e = $("#stageEmpty"); if (e) e.textContent = "No bags burned yet. Be the first exhibit."; }
+        // newest first; prepend new ones so the cluster grows from the centre
+        fresh.reverse().forEach(x => { seen.add(keyOf(x)); makeBubble(x); items.unshift(x); });
+        layout();
+      } catch { setTimeout(load, 3000); }
+    }
+
+    let t; window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(layout, 150); });
+    load();
+    setInterval(load, 25000);
+
+    // nav: username chip + hamburger + active link
+    (async () => {
+      try {
+        const r = await fetch("/auth/me", { headers: { Accept: "application/json" } });
+        if (!r.ok) return; const u = (await r.json()).user; if (!u) return;
+        const el = $("#navUser"); if (!el) return;
+        const txt = "@" + u.username;
+        const btn = document.createElement("button");
+        btn.type = "button"; btn.className = "nav__userbtn"; btn.title = "Copy username + open dashboard"; btn.textContent = txt;
+        btn.onclick = () => { (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => { btn.classList.add("copied"); btn.textContent = "copied ✓"; setTimeout(() => { window.location.href = "/apply"; }, 550); }).catch(() => { window.location.href = "/apply"; }); };
+        el.innerHTML = ""; el.appendChild(btn);
+      } catch {}
+    })();
+    (function () {
+      const nav = document.querySelector(".nav"), tog = $("#navToggle");
+      if (!nav || !tog) return;
+      let p = location.pathname; if (p.length > 1 && p.slice(-1) === "/") p = p.slice(0, -1);
+      nav.querySelectorAll(".nav__links a").forEach(a => { if (a.getAttribute("href") === p) a.classList.add("is-active"); });
+      tog.onclick = () => { const o = nav.classList.toggle("nav--open"); tog.setAttribute("aria-expanded", o ? "true" : "false"); };
+      nav.querySelectorAll(".nav__links a").forEach(a => a.addEventListener("click", () => nav.classList.remove("nav--open")));
+    })();
+  </script>
+</body>
+</html>

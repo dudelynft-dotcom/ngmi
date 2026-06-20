@@ -35,7 +35,7 @@ if (!X_CONFIGURED) {
 // can't see the x.com login cookie, so fresh browsers loop on "log in to X" forever.
 const AUTHORIZE_URL = "https://x.com/i/oauth2/authorize";
 const TOKEN_URL = "https://api.twitter.com/2/oauth2/token";
-const ME_URL = "https://api.twitter.com/2/users/me?user.fields=profile_image_url,username,name";
+const ME_URL = "https://api.twitter.com/2/users/me?user.fields=profile_image_url,username,name,public_metrics";
 
 const DATA_DIR = path.join(__dirname, "data");
 const WL_FILE = path.join(DATA_DIR, "whitelist.json");
@@ -131,6 +131,8 @@ async function initDb() {
   )`;
   await tsql`ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending'`;
   await tsql`ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS shame_tweet TEXT`;
+  await tsql`ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS avatar TEXT`;
+  await tsql`ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS followers INTEGER DEFAULT 0`;
   await tsql`CREATE TABLE IF NOT EXISTS points (
     user_id TEXT PRIMARY KEY, handle TEXT, balance INTEGER DEFAULT 0,
     claimed JSONB DEFAULT '[]'::jsonb, updated_at TIMESTAMPTZ DEFAULT now()
@@ -266,6 +268,7 @@ app.get("/auth/x/callback", async (req, res) => {
       username: me.username,
       name: me.name,
       avatar: me.profile_image_url || null,
+      followers: (me.public_metrics && me.public_metrics.followers_count) || 0,
     };
     res.redirect("/apply#wl");
   } catch (e) {
@@ -360,6 +363,80 @@ app.get("/api/ruglist", async (req, res) => {
   res.json({ ok: true, count: rows.length, rows: rows.slice(0, 500) });
 });
 
+/* The Rug Museum: every burn as a tile, with the burned NFT's image (backfilled on demand). */
+app.get("/api/rugmuseum", async (req, res) => {
+  let rows = [];
+  if (neonUp()) {
+    try {
+      rows = await neonRead(() => sql`
+        SELECT handle,
+               b->>'projectName' AS collection,
+               b->>'tokenId'     AS token_id,
+               b->>'contract'    AS contract,
+               b->>'tx'          AS tx,
+               b->>'image'       AS image,
+               chain_id,
+               extract(epoch from updated_at)::bigint AS ts
+        FROM whitelist, jsonb_array_elements(burns) AS b
+        ORDER BY updated_at DESC
+        LIMIT 400`);
+    } catch (e) { neonFailed(e); return res.status(503).json({ ok: false, warming: true }); }
+  } else {
+    const list = readWhitelist();
+    if (sql && !list.length) return res.status(503).json({ ok: false, warming: true });
+    for (const e of list) for (const b of (e.burns || [])) rows.push({ handle: e.handle, collection: b.projectName, token_id: b.tokenId, contract: b.contract, tx: b.tx, image: b.image, chain_id: e.chainId, ts: 0 });
+    rows.reverse();
+  }
+  rows = rows.filter((r) => !isHidden(r.handle));
+  // Backfill missing token images from Alchemy, bounded per request (cache makes repeats cheap).
+  let budget = 60;
+  for (const r of rows) {
+    if ((!r.image || r.image === "") && r.contract && budget > 0) {
+      budget--;
+      r.image = await getNFTImage(r.contract, r.token_id, r.chain_id || "0x1").catch(() => "");
+    }
+  }
+  res.set("Cache-Control", "public, max-age=15, s-maxage=30, stale-while-revalidate=180");
+  res.json({ ok: true, count: rows.length, rows });
+});
+
+/* Hall of Shame: every burner with their X profile (avatar, followers) and burn stats. */
+app.get("/api/hallofshame", async (req, res) => {
+  let users = [];
+  if (neonUp()) {
+    try {
+      users = await neonRead(() => sql`
+        SELECT handle, name, avatar, COALESCE(followers, 0) AS followers, burn_count,
+               extract(epoch from updated_at)::bigint AS ts,
+               (SELECT array_agg(DISTINCT bb->>'projectName') FROM jsonb_array_elements(burns) bb WHERE COALESCE(bb->>'projectName', '') <> '') AS collections
+        FROM whitelist
+        WHERE burn_count > 0
+        ORDER BY burn_count DESC, followers DESC NULLS LAST
+        LIMIT 200`);
+    } catch (e) { neonFailed(e); return res.status(503).json({ ok: false, warming: true }); }
+  } else {
+    const list = readWhitelist();
+    if (sql && !list.length) return res.status(503).json({ ok: false, warming: true });
+    users = list.filter((e) => (e.burnCount || 0) > 0).map((e) => ({
+      handle: e.handle, name: e.name, avatar: e.avatar, followers: e.followers || 0, burn_count: e.burnCount,
+      ts: 0, collections: [...new Set((e.burns || []).map((b) => b.projectName).filter(Boolean))],
+    }));
+    users.sort((a, b) => b.burn_count - a.burn_count || (b.followers || 0) - (a.followers || 0));
+  }
+  users = users.filter((u) => !isHidden(u.handle));
+  // Fill in any missing avatar/followers from X (app-only), bounded per request.
+  let budget = 40;
+  for (const u of users) {
+    if ((!u.avatar || !u.followers) && budget > 0) {
+      budget--;
+      const p = await getXProfile(u.handle).catch(() => null);
+      if (p) { if (!u.avatar) u.avatar = p.avatar; if (!u.followers) u.followers = p.followers; }
+    }
+  }
+  res.set("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=300");
+  res.json({ ok: true, count: users.length, rows: users });
+});
+
 /* --- 3c. Detect a wallet's NFTs via Alchemy (optional) --------- */
 const ALCHEMY_NETWORKS = {
   // mainnets
@@ -434,6 +511,63 @@ app.get("/api/collection-image", async (req, res) => {
   res.set("Cache-Control", "public, max-age=86400");
   res.json(await fetchCollMeta(String(req.query.contract || ""), String(req.query.chainId || "0x1")));
 });
+
+/* Per-token image (for the Rug Museum), Alchemy getNFTMetadata, cached. Falls back to the
+   collection image when the token itself has no media. */
+const nftImgCache = new Map();
+async function getNFTImage(contract, tokenId, chainId) {
+  const net = ALCHEMY_NETWORKS[chainId] || ALCHEMY_NETWORKS["0x1"];
+  if (!ALCHEMY_KEY || !net || !/^0x[0-9a-fA-F]{40}$/.test(contract || "")) return "";
+  const cacheKey = (chainId || "0x1") + ":" + contract.toLowerCase() + ":" + tokenId;
+  if (nftImgCache.has(cacheKey)) return nftImgCache.get(cacheKey);
+  let img = "";
+  try {
+    const url = `https://${net}.g.alchemy.com/nft/v3/${ALCHEMY_KEY}/getNFTMetadata?contractAddress=${contract}&tokenId=${encodeURIComponent(tokenId)}&refreshCache=false`;
+    const r = await fetch(url);
+    const d = r.ok ? await r.json() : {};
+    img = d?.image?.cachedUrl || d?.image?.thumbnailUrl || d?.image?.originalUrl || d?.image?.pngUrl || "";
+    if (!img) { const m = await fetchCollMeta(contract, chainId).catch(() => null); img = (m && m.image) || ""; }
+  } catch { img = ""; }
+  nftImgCache.set(cacheKey, img);
+  return img;
+}
+
+/* X profile (avatar + followers) via an app-only bearer token, cached - used to enrich the
+   Hall of Shame for people whose profile we didn't store at apply time. */
+let appBearer = null;
+async function getAppBearer() {
+  if (appBearer) return appBearer;
+  if (!X_CLIENT_ID || !X_CLIENT_SECRET) return null;
+  try {
+    const basic = Buffer.from(`${X_CLIENT_ID}:${X_CLIENT_SECRET}`).toString("base64");
+    const r = await fetch("https://api.twitter.com/oauth2/token", {
+      method: "POST",
+      headers: { Authorization: `Basic ${basic}`, "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+      body: "grant_type=client_credentials",
+    });
+    const d = r.ok ? await r.json() : {};
+    appBearer = d.access_token || null;
+    return appBearer;
+  } catch { return null; }
+}
+const xProfileCache = new Map();
+async function getXProfile(handle) {
+  const uname = String(handle || "").replace(/^@/, "").trim();
+  if (!uname) return null;
+  if (xProfileCache.has(uname)) return xProfileCache.get(uname);
+  const bearer = await getAppBearer();
+  if (!bearer) return null;
+  try {
+    const r = await fetch(`https://api.twitter.com/2/users/by/username/${encodeURIComponent(uname)}?user.fields=profile_image_url,public_metrics`, {
+      headers: { Authorization: `Bearer ${bearer}` },
+    });
+    const d = r.ok ? await r.json() : {};
+    const u = d.data;
+    const prof = u ? { avatar: u.profile_image_url || "", followers: (u.public_metrics && u.public_metrics.followers_count) || 0 } : null;
+    xProfileCache.set(uname, prof);
+    return prof;
+  } catch { return null; }
+}
 
 /* --- 3f. NGMI Points + quests (tasks are admin-manageable, stored in Neon) --- */
 const X_HANDLE = process.env.X_HANDLE || "engmiHQ";
@@ -636,6 +770,7 @@ app.post("/api/whitelist", async (req, res) => {
         contract: s(b && b.contract, 64),
         tokenId: s(b && b.tokenId, 80),
         tx: s(b && b.tx, 80),
+        image: s(b && b.image, 400),
       })).filter((b) => txOk(b.tx))
     : [];
 
@@ -658,15 +793,18 @@ app.post("/api/whitelist", async (req, res) => {
   if (neonUp()) {
     try {
       const burnsJson = JSON.stringify(cleanBurns);
+      const avatar = (user.avatar || "").slice(0, 300);
+      const followers = Number(user.followers) || 0;
       const rows = await tsql`
-        INSERT INTO whitelist (user_id, handle, name, lost_usd, cope, nft_ath, chain_id, approval, burn_count, burns, status, shame_tweet)
+        INSERT INTO whitelist (user_id, handle, name, lost_usd, cope, nft_ath, chain_id, approval, burn_count, burns, status, shame_tweet, avatar, followers)
         VALUES (${user.id}, ${"@" + user.username}, ${user.name}, ${s(lostUsd, 64)}, ${s(cope, 256)},
-                ${s(nftAth, 64)}, ${s(chainId, 16)}, ${appr}, ${cleanBurns.length}, ${burnsJson}::jsonb, ${status}, ${shame})
+                ${s(nftAth, 64)}, ${s(chainId, 16)}, ${appr}, ${cleanBurns.length}, ${burnsJson}::jsonb, ${status}, ${shame}, ${avatar}, ${followers})
         ON CONFLICT (user_id) DO UPDATE SET
           handle = EXCLUDED.handle, name = EXCLUDED.name, lost_usd = EXCLUDED.lost_usd,
           cope = EXCLUDED.cope, nft_ath = EXCLUDED.nft_ath, chain_id = EXCLUDED.chain_id,
           approval = EXCLUDED.approval, burn_count = EXCLUDED.burn_count, burns = EXCLUDED.burns,
-          status = EXCLUDED.status, shame_tweet = EXCLUDED.shame_tweet, updated_at = now()
+          status = EXCLUDED.status, shame_tweet = EXCLUDED.shame_tweet,
+          avatar = EXCLUDED.avatar, followers = EXCLUDED.followers, updated_at = now()
         RETURNING spot`;
       const totalRows = await tsql`SELECT count(*)::int AS n FROM whitelist`;
       const pts = await awardPoints(user, "apply").catch(() => null);
@@ -737,6 +875,9 @@ app.post("/api/admin/decide", async (req, res) => {
 });
 
 /* --- 5. Static site -------------------------------------------- */
+// The Ruglist became the Rug Museum - keep old links working.
+app.get("/ruglist", (req, res) => res.redirect(301, "/rugmuseum"));
+
 app.use(
   express.static(__dirname, {
     extensions: ["html"],
