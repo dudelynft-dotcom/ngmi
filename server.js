@@ -296,7 +296,7 @@ app.get("/auth/me", (req, res) => {
            followers = GREATEST(COALESCE(followers, 0), ${Number(u.followers) || 0})
          WHERE user_id = ${u.id}`.catch(() => {});
   }
-  res.json({ configured: X_CONFIGURED, user: u || null });
+  res.json({ configured: X_CONFIGURED, user: u || null, wcProjectId: process.env.WALLETCONNECT_PROJECT_ID || "" });
 });
 
 app.post("/auth/logout", (req, res) => {

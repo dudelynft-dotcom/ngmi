@@ -23,7 +23,7 @@ const BRAND = {
 /* Runtime auth state, filled in by checkAuth() on boot.
    backend=true  → the Node server (server.js) is serving us, real X OAuth is available.
    backend=false → opened as a static file / dumb static host → fall back to the mock login. */
-const APP = { backend: false, configured: false, user: null };
+const APP = { backend: false, configured: false, user: null, wcProjectId: "" };
 
 /* ----------------------------- tiny utils ----------------------------- */
 const $ = (s, r = document) => r.querySelector(s);
@@ -309,7 +309,31 @@ if (modal) {
    ========================================================= */
 const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD";
 const SIG = { ownerOf: "0x6352211e", name: "0x06fdde03", transferFrom: "0x23b872dd" };
-const hasWallet = () => typeof window !== "undefined" && !!window.ethereum;
+const injected = () => (typeof window !== "undefined" ? window.ethereum : null);
+const hasWallet = () => !!injected();
+// The active EIP-1193 provider: an injected wallet, or a WalletConnect session.
+let EIP = null;
+const activeProvider = () => EIP || injected();
+let wcProvider = null;
+async function getWC() {
+  if (wcProvider) return wcProvider;
+  if (!APP.wcProjectId) throw new Error("WalletConnect is not configured");
+  const mod = await import("https://esm.sh/@walletconnect/ethereum-provider@2.17.0");
+  const EthereumProvider = mod.EthereumProvider || mod.default;
+  wcProvider = await EthereumProvider.init({
+    projectId: APP.wcProjectId,
+    chains: [1],
+    optionalChains: [8453, 137, 10, 42161],
+    showQrModal: true,
+    metadata: {
+      name: "NGMI - Exit Liquidity",
+      description: "Burn a rugged bag to join the NGMI whitelist.",
+      url: location.origin,
+      icons: [location.origin + "/favicon.ico"],
+    },
+  });
+  return wcProvider;
+}
 
 const strip0x = (h) => (String(h).startsWith("0x") ? String(h).slice(2) : String(h));
 const addr32 = (a) => strip0x(a).toLowerCase().padStart(64, "0");
@@ -317,7 +341,11 @@ const id32 = (id) => BigInt(id).toString(16).padStart(64, "0");
 const isAddress = (a) => /^0x[0-9a-fA-F]{40}$/.test((a || "").trim());
 const seedFromStr = (s) => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h || 1; };
 
-const ethReq = (method, params = []) => window.ethereum.request({ method, params });
+const ethReq = (method, params = []) => {
+  const p = activeProvider();
+  if (!p) return Promise.reject(new Error("No wallet provider connected"));
+  return p.request({ method, params });
+};
 const ethCall = (to, data) => ethReq("eth_call", [{ to, data }, "latest"]);
 const decodeAddress = (word) => "0x" + strip0x(word).slice(24);
 function decodeString(ret) {
@@ -559,14 +587,8 @@ function stepBurn() {
 function renderWalletBox() {
   const box = $("#walletBox");
   if (!box) return;
-  if (!hasWallet()) {
-    const dapp = `https://metamask.app.link/dapp/${location.host}${location.pathname}`;
-    box.innerHTML =
-      `<div class="x-handle" style="border-style:dashed">No browser wallet found.<span class="hint" style="margin-left:8px">A burn is a real on-chain tx. On mobile, open this page inside your wallet's browser.</span></div>` +
-      `<a class="btn btn--accent btn--block" href="${dapp}" target="_blank" rel="noopener" style="margin-top:8px">Open in MetaMask &rarr;</a>` +
-      `<p class="hint" style="margin:6px 0 0">Using Rabby, Coinbase Wallet, Trust, etc.? Open <b>engmi.fun/apply</b> from inside that app's built-in browser.</p>`;
-    return;
-  }
+
+  // Connected (injected or WalletConnect)
   if (WL.wallet) {
     const offMain = WL.chainId && WL.chainId !== "0x1";
     box.innerHTML =
@@ -576,12 +598,28 @@ function renderWalletBox() {
     const se = $("#switchEth"); if (se) se.onclick = switchToEthereum;
     return;
   }
-  box.innerHTML = `<button class="x-login" type="button" id="connectW">Connect wallet</button>`;
-  $("#connectW").onclick = onConnect;
+
+  // Disconnected
+  const wcBtn = APP.wcProjectId ? `<button class="btn btn--accent btn--block" id="wcBtn" type="button">Connect with WalletConnect</button>` : "";
+  if (hasWallet()) {
+    box.innerHTML =
+      `<button class="x-login" type="button" id="connectW">Connect browser wallet</button>` +
+      (wcBtn ? `<div style="margin-top:8px">${wcBtn}</div>` : "");
+  } else {
+    const dapp = `https://metamask.app.link/dapp/${location.host}${location.pathname}`;
+    box.innerHTML =
+      (wcBtn || "") +
+      (wcBtn ? `<p class="hint" style="margin:6px 0 8px">Scan with your phone's wallet, or it deep-links straight into the app.</p>` : "") +
+      `<a class="btn btn--ghost btn--block" href="${dapp}" target="_blank" rel="noopener">Open in MetaMask &rarr;</a>` +
+      (wcBtn ? "" : `<p class="hint" style="margin:6px 0 0">Or open <b>engmi.fun/apply</b> inside your wallet app's built-in browser.</p>`);
+  }
+  const cw = $("#connectW"); if (cw) cw.onclick = onConnect;
+  const wb = $("#wcBtn"); if (wb) wb.onclick = connectWC;
 }
 
 async function onConnect() {
   try {
+    EIP = injected();
     WL.wallet = await connectWallet();
     WL.chainId = await ethReq("eth_chainId").catch(() => "0x1");
     attachWalletListeners();
@@ -590,22 +628,46 @@ async function onConnect() {
   } catch { toast("Wallet connection rejected."); }
 }
 
-// React to the user switching network/account in their wallet while on the burn step.
+// WalletConnect: opens a modal (QR on desktop, deep-links to wallet apps on mobile).
+async function connectWC() {
+  const btn = $("#wcBtn");
+  if (btn) { btn.disabled = true; btn.textContent = "Opening…"; }
+  try {
+    const wc = await getWC();
+    const accts = await wc.enable();   // shows the modal, resolves with accounts
+    if (!accts || !accts.length) throw new Error("no accounts");
+    EIP = wc;
+    WL.wallet = accts[0];
+    WL.chainId = "0x" + Number(wc.chainId || 1).toString(16);
+    attachWalletListeners();
+    renderWalletBox();
+    await loadNfts();
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = "Connect with WalletConnect"; }
+    toast("WalletConnect cancelled or failed.");
+  }
+}
+
+// React to the user switching network/account (works for injected AND WalletConnect).
 function attachWalletListeners() {
-  if (!hasWallet() || !window.ethereum.on || burnState._hooked) return;
+  const p = activeProvider();
+  if (!p || !p.on || burnState._hooked) return;
   burnState._hooked = true;
-  window.ethereum.on("chainChanged", (cid) => {
-    WL.chainId = cid;
+  p.on("chainChanged", (cid) => {
+    WL.chainId = typeof cid === "string" && cid.startsWith("0x") ? cid : "0x" + Number(cid).toString(16);
     if ($("#nftArea") && WL.wallet) { renderWalletBox(); loadNfts(); }
   });
-  window.ethereum.on("accountsChanged", (accts) => {
+  p.on("accountsChanged", (accts) => {
     if (!accts || !accts.length) { if ($("#nftArea")) disconnectWallet(); return; }
     WL.wallet = accts[0];
     if ($("#nftArea")) { renderWalletBox(); loadNfts(); }
   });
+  p.on("disconnect", () => { if ($("#nftArea")) disconnectWallet(); });
 }
 
 function disconnectWallet() {
+  try { if (EIP && EIP === wcProvider && EIP.disconnect) EIP.disconnect(); } catch {}
+  EIP = null; burnState._hooked = false;
   WL.wallet = null; WL.chainId = null;
   burnState.nfts = []; burnState.selected = []; burnState.mode = "init"; burnState.loading = false;
   renderWalletBox(); renderNftArea(); renderApproval(); updateBurnBtn();
@@ -668,11 +730,10 @@ function nftCardHtml(n) {
 function renderNftArea() {
   const area = $("#nftArea"); if (!area) return;
 
-  if (!hasWallet()) {
-    area.innerHTML = `<p class="hint" style="margin:6px 0 2px">A whitelist burn is a real on-chain transaction, so you need a web3 wallet (MetaMask, Rabby, or a wallet's in-app browser). No wallet, no burn. Nothing to burn anyway? <a href="/tasks" style="color:var(--rug)">Farm points instead →</a></p>`;
+  if (!WL.wallet) {
+    area.innerHTML = `<p class="hint" style="margin:6px 0 2px">Connect your wallet above to load the NFTs that wronged you. Nothing to burn? <a href="/tasks" style="color:var(--rug)">Farm points instead →</a></p>`;
     return;
   }
-  if (!WL.wallet) { area.innerHTML = `<p class="hint" style="margin:6px 0 2px">Connect your wallet to load the NFTs that wronged you.</p>`; return; }
   if (burnState.loading) { area.innerHTML = `<div class="nft-loading">Scanning the chain for your bad decisions…</div>`; return; }
 
   if (burnState.mode === "manual") {
@@ -712,7 +773,7 @@ function renderNftArea() {
 function renderApproval() {
   const box = $("#approvalBox"); if (!box) return;
   box.hidden = false;
-  const manual = !hasWallet() || burnState.mode === "manual";
+  const manual = burnState.mode === "manual";
   const liveBags = manual ? 1 : burnState.selected.length;
   const count = (WL.priorBurns ? WL.priorBurns.length : 0) + liveBags;  // prior burns add up too
   const athText = ($("#bAth") && $("#bAth").value) || "";
@@ -739,7 +800,7 @@ function renderApproval() {
 
 function updateBurnBtn() {
   const btn = $("#bBurn"); if (!btn) return;
-  if (!hasWallet()) { btn.disabled = true; btn.textContent = "Wallet required to burn"; return; }
+  if (!WL.wallet) { btn.disabled = true; btn.textContent = "Connect a wallet to burn"; return; }
   if (burnState.mode === "manual") { btn.disabled = false; btn.textContent = "Burn it live"; return; }
   const n = burnState.selected.length;
   btn.disabled = n === 0;
@@ -756,9 +817,8 @@ async function fetchCollectionMeta(contract, chainId) {
 }
 
 async function burnExecute() {
-  // A whitelist burn must be a real on-chain transaction - no wallet, no burn.
-  if (!hasWallet()) { toast("You need a web3 wallet (MetaMask, Rabby, or a wallet browser) to burn. No wallet, no burn."); return; }
-  if (!WL.wallet) { toast("Connect your wallet first."); return; }
+  // A whitelist burn must be a real on-chain transaction - connect a wallet first (injected or WalletConnect).
+  if (!WL.wallet) { toast("Connect a wallet first - WalletConnect, or your wallet's in-app browser."); return; }
 
   const ath = (($("#bAth") && $("#bAth").value) || "").trim();
   if (!ath) { toast("Required: enter the bag's ATH - it decides your odds."); if ($("#bAth")) $("#bAth").focus(); return; }
@@ -1016,6 +1076,7 @@ async function checkAuth() {
     APP.backend = true;
     APP.configured = !!data.configured;
     APP.user = data.user || null;
+    APP.wcProjectId = data.wcProjectId || "";
     if (APP.user) WL.handle = "@" + APP.user.username;
   } catch { /* file:// or no server → mock mode */ }
 }
