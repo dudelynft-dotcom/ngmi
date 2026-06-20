@@ -270,6 +270,14 @@ app.get("/auth/x/callback", async (req, res) => {
       avatar: me.profile_image_url || null,
       followers: (me.public_metrics && me.public_metrics.followers_count) || 0,
     };
+    // Refresh the stored X profile (avatar + followers) for an existing burner on every login,
+    // so re-authenticating fills in data we didn't have when they first applied.
+    if (sql) {
+      tsql`UPDATE whitelist SET
+             avatar = COALESCE(NULLIF(${me.profile_image_url || ""}, ''), avatar),
+             followers = GREATEST(COALESCE(followers, 0), ${(me.public_metrics && me.public_metrics.followers_count) || 0})
+           WHERE user_id = ${me.id}`.catch(() => {});
+    }
     res.redirect("/apply#wl");
   } catch (e) {
     console.error("OAuth callback error:", e);

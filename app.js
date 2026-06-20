@@ -560,7 +560,11 @@ function renderWalletBox() {
   const box = $("#walletBox");
   if (!box) return;
   if (!hasWallet()) {
-    box.innerHTML = `<div class="x-handle" style="border-style:dashed">No browser wallet found.<span class="hint" style="margin-left:8px">A burn is a real on-chain tx - install MetaMask or open in a wallet browser.</span></div>`;
+    const dapp = `https://metamask.app.link/dapp/${location.host}${location.pathname}`;
+    box.innerHTML =
+      `<div class="x-handle" style="border-style:dashed">No browser wallet found.<span class="hint" style="margin-left:8px">A burn is a real on-chain tx. On mobile, open this page inside your wallet's browser.</span></div>` +
+      `<a class="btn btn--accent btn--block" href="${dapp}" target="_blank" rel="noopener" style="margin-top:8px">Open in MetaMask &rarr;</a>` +
+      `<p class="hint" style="margin:6px 0 0">Using Rabby, Coinbase Wallet, Trust, etc.? Open <b>engmi.fun/apply</b> from inside that app's built-in browser.</p>`;
     return;
   }
   if (WL.wallet) {
@@ -1223,7 +1227,8 @@ function dashboardMarkup(app) {
       <button class="btn btn--ghost" id="dashShare">Post my shame to X</button>
       ${approved ? "" : `<button class="btn btn--accent" id="dashBurnMore">${rejected ? "Burn more & resubmit" : "Burn more bags — raise your odds"}</button>`}
       <a class="btn btn--ghost" href="/rugmuseum">The Rug Museum</a>
-      <a class="btn btn--ghost" href="/">Back to site</a>
+      <a class="btn btn--ghost" href="/hall-of-shame">Hall of Shame</a>
+      <a class="btn btn--ghost" href="/auth/x/login" title="Re-login to refresh your X follower count">Refresh my X data</a>
     </div>
     <p class="dash__fine">Parody / satire. The numbers are fake, the rug is a bit, no mint is promised. Do not actually burn or buy anything.</p>
   </div>`;
