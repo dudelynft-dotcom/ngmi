@@ -40,6 +40,34 @@
       background: var(--paper); color: var(--ink); border: 2px solid var(--ink); border-radius: 4px; padding: 6px 9px; white-space: nowrap;
       font-family: var(--mono); font-size: 11px; transition: opacity .12s, transform .12s; z-index: 6; box-shadow: 3px 3px 0 var(--ink); }
     .tip b { color: var(--rug); }
+
+    /* Ruglist block-explorer (below the bubble map) */
+    .sub__kick { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--rug); font-weight: 700; }
+    .exp__head { margin: 40px 0 14px; }
+    .exp__cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 18px; }
+    .exp__card { border: 2px solid var(--ink); border-radius: 4px; background: var(--paper-2); padding: 12px 15px; }
+    .exp__card > span { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-soft); }
+    .exp__card > b { display: block; font-family: var(--poster); font-weight: 400; font-size: 30px; line-height: 1.1; margin-top: 4px; }
+    .exp__card .mono { font-family: var(--mono); font-size: 15px; font-weight: 700; }
+    .exp__card .down { color: var(--rug); }
+    .exp__panel { border: 2px solid var(--ink); border-radius: 4px; background: var(--paper-2); overflow: hidden; }
+    .exp__panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 2px solid var(--ink); font-family: var(--mono); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .03em; }
+    .exp__panel-head .pulse { color: var(--rug); font-size: 11px; }
+    .exp__scroll { overflow-x: auto; }
+    table.exp__table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 13px; min-width: 880px; }
+    .exp__table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-soft); font-weight: 700; padding: 11px 14px; border-bottom: 2px solid var(--ink); white-space: nowrap; background: #ecebe1; }
+    .exp__table td { padding: 12px 14px; border-bottom: 1px solid rgba(11,11,11,.1); white-space: nowrap; vertical-align: middle; }
+    .exp__table tr:last-child td { border-bottom: none; }
+    .exp__table tbody tr:hover td { background: rgba(198,242,78,.12); }
+    .exp__hash, .exp__addr { color: #2563eb; text-decoration: none; }
+    .exp__hash:hover, .exp__addr:hover { text-decoration: underline; }
+    .exp__user { color: var(--ink); border-bottom: 2px solid var(--acid); text-decoration: none; }
+    .exp__method { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; background: var(--rug); color: #fff; padding: 2px 9px; border-radius: 3px; }
+    .exp__coll { font-family: var(--font); font-weight: 900; font-size: 14px; }
+    .exp__chip { display: inline-block; font-size: 11px; padding: 2px 9px; border: 1.5px solid var(--ink); border-radius: 20px; }
+    .exp__age { color: var(--ink-soft); }
+    .exp__empty { font-family: var(--mono); color: var(--ink-soft); padding: 40px 16px; text-align: center; }
+    @media (max-width: 600px) { .exp__card > b { font-size: 24px; } }
   </style>
 </head>
 <body>
@@ -79,12 +107,75 @@
     </div>
 
     <div class="stage" id="stage"><div class="stage__empty" id="stageEmpty">Warming the gallery…</div></div>
+
+    <!-- The Ruglist: same burns, on-chain block-explorer view -->
+    <div class="exp__head"><span class="sub__kick">// THE RUGLIST · BLOCK EXPLORER</span></div>
+    <div class="exp__cards">
+      <div class="exp__card"><span>Bags incinerated</span><b id="cBurns" class="down">—</b></div>
+      <div class="exp__card"><span>Rugged souls</span><b id="cSouls">—</b></div>
+      <div class="exp__card"><span>Latest cremation</span><b id="cLatest" class="mono">—</b></div>
+      <div class="exp__card"><span>Burn address</span><b class="mono"><a class="exp__addr" target="_blank" rel="noopener" href="https://etherscan.io/address/0x000000000000000000000000000000000000dEaD">0x0000…dEaD</a></b></div>
+    </div>
+
+    <div class="exp__panel" style="margin-bottom:18px">
+      <div class="exp__panel-head"><span>Top ruggers</span><span class="pulse" style="color:var(--ink-soft)">most-burned collections</span></div>
+      <div class="exp__scroll">
+        <table class="exp__table" style="min-width:560px">
+          <thead><tr><th>Rank</th><th>Collection</th><th>Times burned</th><th>Souls rugged</th><th>Last burn</th></tr></thead>
+          <tbody id="topRows"><tr><td colspan="5" class="exp__empty">—</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="exp__panel">
+      <div class="exp__panel-head"><span>Latest burns</span><span class="pulse">&#9679; live</span></div>
+      <div class="exp__scroll">
+        <table class="exp__table">
+          <thead><tr><th>Burn Tx</th><th>Method</th><th>Age</th><th>Collection</th><th>Token</th><th>Burned By</th><th>To</th><th>Chain</th></tr></thead>
+          <tbody id="rows"><tr><td colspan="8" class="exp__empty">Loading the wall of shame...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
   </main>
 
   <script>
     const $ = (s) => document.querySelector(s);
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
     const short = (s) => { s = String(s || ""); return s.length > 8 ? s.slice(0, 8) : s; };
+
+    // Ruglist explorer helpers
+    const EXPLORERS = { "0x1":"https://etherscan.io", "0x89":"https://polygonscan.com", "0x2105":"https://basescan.org", "0xa":"https://optimistic.etherscan.io", "0xa4b1":"https://arbiscan.io", "0xaa36a7":"https://sepolia.etherscan.io", "0x14a34":"https://sepolia.basescan.org", "0x66eee":"https://sepolia.arbiscan.io", "0xaa37dc":"https://sepolia-optimism.etherscan.io", "0x13882":"https://amoy.polygonscan.com" };
+    const CHAINS = { "0x1":"Ethereum", "0x89":"Polygon", "0x2105":"Base", "0xa":"Optimism", "0xa4b1":"Arbitrum", "0xaa36a7":"Sepolia", "0x14a34":"Base Sepolia", "0x66eee":"Arb Sepolia", "0xaa37dc":"OP Sepolia", "0x13882":"Amoy" };
+    const DEAD = "0x000000000000000000000000000000000000dEaD";
+    const txUrl = (tx, chain) => (EXPLORERS[chain] || "https://etherscan.io") + "/tx/" + tx;
+    const addrUrl = (chain) => (EXPLORERS[chain] || "https://etherscan.io") + "/address/" + DEAD;
+    const shortId = (id) => { id = String(id || ""); return id.length > 12 ? id.slice(0, 12) + "..." : id; };
+    const shortHash = (h, n = 8) => { h = String(h || ""); return h.length > n + 6 ? h.slice(0, n) + "…" + h.slice(-6) : h; };
+    function timeAgo(ts) { ts = Number(ts); if (!ts) return "-"; let s = Math.max(1, Math.floor(Date.now() / 1000 - ts)); if (s < 60) return s + "s ago"; const m = Math.floor(s / 60); if (m < 60) return m + "m ago"; const h = Math.floor(m / 60); if (h < 24) return h + "h ago"; return Math.floor(h / 24) + "d ago"; }
+
+    // Top ruggers = collections burned the most. Latest burns = the explorer table.
+    function renderExplorer(rows, count) {
+      const souls = new Set(rows.map(r => (r.handle || "").toLowerCase()).filter(Boolean)).size;
+      $("#cBurns").textContent = count;
+      $("#cSouls").textContent = souls || "—";
+      $("#cLatest").textContent = rows.length ? timeAgo(rows[0].ts) : "—";
+      const map = new Map();
+      for (const r of rows) {
+        const name = r.collection || "Unknown", key = name.toLowerCase();
+        if (!map.has(key)) map.set(key, { name, burns: 0, souls: new Set(), latest: 0 });
+        const e = map.get(key); e.burns++; if (r.handle) e.souls.add(String(r.handle).toLowerCase()); e.latest = Math.max(e.latest, Number(r.ts) || 0);
+      }
+      const top = [...map.values()].sort((a, b) => b.burns - a.burns || b.souls.size - a.souls.size).slice(0, 8);
+      const tb = $("#topRows");
+      tb.innerHTML = top.length ? top.map((e, i) => `<tr><td>${i === 0 ? '<b style="color:var(--rug)">#1</b>' : "#" + (i + 1)}</td><td><span class="exp__coll">${esc(e.name)}</span></td><td><b>${e.burns}</b></td><td>${e.souls.size}</td><td class="exp__age">${timeAgo(e.latest)}</td></tr>`).join("") : `<tr><td colspan="5" class="exp__empty">No collections burned yet.</td></tr>`;
+      const body = $("#rows");
+      if (!rows.length) { body.innerHTML = `<tr><td colspan="8" class="exp__empty">No burns yet. Be the first to torch your trauma.</td></tr>`; return; }
+      body.innerHTML = rows.map(r => {
+        const chain = esc(r.chain_id || "0x1"), handle = esc(r.handle || "anon"), xUser = handle.replace(/^@/, "");
+        const txCell = r.tx ? `<a class="exp__hash" href="${txUrl(esc(r.tx), chain)}" target="_blank" rel="noopener">${esc(shortHash(r.tx))}</a>` : `<span class="exp__age">pending</span>`;
+        return `<tr><td>${txCell}</td><td><span class="exp__method">Burn</span></td><td class="exp__age">${timeAgo(r.ts)}</td><td><span class="exp__coll">${esc(r.collection || "Unknown")}</span></td><td>#${esc(shortId(r.token_id))}</td><td><a class="exp__user" href="https://x.com/${xUser}" target="_blank" rel="noopener">${handle}</a></td><td><a class="exp__addr" href="${addrUrl(chain)}" target="_blank" rel="noopener">${esc(shortHash(DEAD, 6))}</a></td><td><span class="exp__chip">${esc(CHAINS[chain] || "Chain")}</span></td></tr>`;
+      }).join("");
+    }
 
     const stage = $("#stage");
     const seen = new Set();         // tx|contract:token -> already placed
@@ -145,6 +236,7 @@
         // newest first; prepend new ones so the cluster grows from the centre
         fresh.reverse().forEach(x => { seen.add(keyOf(x)); makeBubble(x); items.unshift(x); });
         layout();
+        renderExplorer(rows, d.count || rows.length);
       } catch { setTimeout(load, 3000); }
     }
 
