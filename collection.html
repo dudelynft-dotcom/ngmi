@@ -27,6 +27,9 @@
     .galbar__jump { display: flex; gap: 8px; }
     .galbar__jump input { font-family: var(--mono); font-size: 13px; border: 2px solid var(--ink); border-radius: 4px; padding: 8px 11px; width: 190px; max-width: 48vw; }
     .gcard.miss { opacity: .2; }
+    .galnav { display: flex; justify-content: center; align-items: center; gap: 16px; margin: 28px 0 0; flex-wrap: wrap; }
+    .galnav__page { font-family: var(--mono); font-size: 13px; color: var(--ink-soft); min-width: 110px; text-align: center; }
+    .galnav .btn[disabled] { opacity: .4; cursor: default; pointer-events: none; }
     .gcard--rug .gcard__rug { aspect-ratio: 1; display: grid; place-content: center; justify-items: center; gap: 3px;
       background: repeating-linear-gradient(45deg, #17170f, #17170f 10px, #0b0b0b 10px, #0b0b0b 20px);
       color: var(--rug); font-family: var(--poster); font-weight: 400; font-size: clamp(16px,3.4vw,26px); letter-spacing: .04em; }
@@ -76,7 +79,7 @@
     </div>
 
     <div class="gallery" id="gallery"></div>
-    <div id="galSentinel" style="height:1px"></div>
+    <div class="galnav" id="galNav"></div>
     <p class="proof__fine">Mint is not live. These are not for sale yet. Calm down.</p>
   </main>
 
@@ -95,38 +98,45 @@
     const RUGGED = new Set();
     for (let i = 7464; i <= 7521; i++) RUGGED.add(i);
 
-    const PAGE = 60;
+    const PER_PAGE = 25;
     const imgUrl = (n) => SRC.base + "/" + (SRC.pad ? String(n).padStart(SRC.pad, "0") : n) + ".png";
     const grid = $("#gallery");
-    let shown = 0, obs = null;
+    const PAGES = Math.max(1, Math.ceil(SRC.total / PER_PAGE));
+    let page = 1;
 
-    function addPage() {
-      if (shown >= SRC.total) return;
-      const end = Math.min(SRC.total, shown + PAGE);
+    function renderPage(p) {
+      page = Math.max(1, Math.min(PAGES, p));
+      const start = (page - 1) * PER_PAGE + 1;
+      const end = Math.min(SRC.total, page * PER_PAGE);
       let html = "";
-      for (let n = shown + 1; n <= end; n++) {
+      for (let n = start; n <= end; n++) {
         if (RUGGED.has(n)) {
           html += `<figure class="gcard gcard--rug"><div class="gcard__rug">RUGGED<span>by the dev</span></div><figcaption>NGMI #${n}<span class="down"> · gone</span></figcaption></figure>`;
         } else {
           html += `<figure class="gcard"><img src="${imgUrl(n)}" loading="lazy" alt="NGMI #${n}" onerror="this.closest('.gcard').classList.add('miss')" /><figcaption>NGMI #${n}<span class="down"> · not minted</span></figcaption></figure>`;
         }
       }
-      grid.insertAdjacentHTML("beforeend", html);
-      shown = end;
-      $("#galShown").textContent = `showing ${shown.toLocaleString()} of ${SRC.total.toLocaleString()}`;
-      if (shown >= SRC.total && obs) obs.disconnect();
+      grid.innerHTML = html;
+      $("#galShown").textContent = `#${start.toLocaleString()} – #${end.toLocaleString()} of ${SRC.total.toLocaleString()}`;
+      $("#galNav").innerHTML =
+        `<button class="btn btn--ghost" id="navPrev"${page <= 1 ? " disabled" : ""}>&larr; Prev</button>` +
+        `<span class="galnav__page">Page ${page} / ${PAGES}</span>` +
+        `<button class="btn btn--ghost" id="navNext"${page >= PAGES ? " disabled" : ""}>Next &rarr;</button>`;
+      const pv = $("#navPrev"), nx = $("#navNext");
+      if (pv) pv.onclick = () => goPage(page - 1);
+      if (nx) nx.onclick = () => goPage(page + 1);
     }
-    addPage();
-    obs = new IntersectionObserver((es) => { if (es[0] && es[0].isIntersecting) addPage(); }, { rootMargin: "700px" });
-    obs.observe($("#galSentinel"));
+    function goPage(p) {
+      renderPage(p);
+      const y = grid.getBoundingClientRect().top + window.scrollY - 80;
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
+    renderPage(1);
 
     function jump() {
       const n = parseInt($("#galJump").value, 10);
       if (!(n >= 1 && n <= SRC.total)) return;
-      let guard = 0;
-      while (shown < n && guard++ < 250) addPage();
-      const card = grid.children[n - 1];
-      if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
+      goPage(Math.ceil(n / PER_PAGE));
     }
     $("#galGo").onclick = jump;
     $("#galJump").addEventListener("keydown", (e) => { if (e.key === "Enter") jump(); });
