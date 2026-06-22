@@ -29,6 +29,10 @@
     .galbar__jump { display: flex; gap: 8px; }
     .galbar__jump input { font-family: var(--mono); font-size: 13px; border: 2px solid var(--ink); border-radius: 4px; padding: 8px 11px; width: 190px; max-width: 48vw; }
     .gcard.miss { opacity: .2; }
+    .gcard--one { outline: 3px solid #e0b020; outline-offset: -3px; }
+    .gcard__one { position: absolute; top: 6px; right: 6px; z-index: 2; background: #e0b020; color: #1a1407;
+      font-family: var(--mono); font-weight: 700; font-size: 10px; padding: 2px 6px; border-radius: 3px;
+      letter-spacing: .04em; box-shadow: 0 1px 2px rgba(0,0,0,.35); }
     .galnav { display: flex; justify-content: center; align-items: center; gap: 16px; margin: 28px 0 0; flex-wrap: wrap; }
     .galnav__page { font-family: var(--mono); font-size: 13px; color: var(--ink-soft); min-width: 110px; text-align: center; }
     .galnav .btn[disabled] { opacity: .4; cursor: default; pointer-events: none; }
@@ -36,7 +40,7 @@
       background: repeating-linear-gradient(45deg, #17170f, #17170f 10px, #0b0b0b 10px, #0b0b0b 20px);
       color: var(--rug); font-family: var(--poster); font-weight: 400; font-size: clamp(16px,3.4vw,26px); letter-spacing: .04em; }
     .gcard--rug .gcard__rug span { font-family: var(--mono); font-weight: 700; font-size: 10px; color: var(--ink-soft); text-transform: uppercase; }
-    .gcard { cursor: pointer; }
+    .gcard { cursor: pointer; position: relative; }
 
     /* ===== Lightbox / victim file ===== */
     .lb { position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center; padding: 18px; }
@@ -64,6 +68,8 @@
     .lb__arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 3; background: rgba(11,11,11,.55); color: #fff; border: none; width: 38px; height: 50px; font-size: 26px; line-height: 1; cursor: pointer; }
     .lb__arrow--prev { left: 0; border-radius: 0 6px 6px 0; }
     .lb__arrow--next { right: 0; border-radius: 6px 0 0 6px; }
+    .lb__panel--one { border-color: #d9a521; box-shadow: 10px 10px 0 #d9a521; }
+    .lb__panel--one .lb__kick { color: #b8860b; }
     @media (max-width: 680px) {
       .lb__panel { flex-direction: column; width: 96vw; max-height: 94vh; }
       .lb__media { flex: 0 0 auto; max-height: 44vh; }
@@ -98,12 +104,14 @@
     <p class="sub__lead">10,000 were generated. Then the dev rugged <b>58</b> of them and stashed them
       up his gf's ass for safekeeping - they came back corrupted, gone forever. So you get
       <b>9,942 hand-rugged Pepes</b> and 58 ghosts that prove we'll rug anyone, even the art.
+      <b>20 are 1/1 legendaries</b> - the rarest way to still own absolutely nothing.
       <b>The mint is not live. Browse your future bag.</b></p>
 
     <div class="sub__stats">
       <div class="cstat">Generated<b>10,000</b></div>
       <div class="cstat">Rugged by dev<b class="down">58</b></div>
       <div class="cstat">Available<b>9,942</b></div>
+      <div class="cstat">1 of 1s<b style="color:#c08a00">20</b></div>
       <div class="cstat">Mint price<b class="down">not free</b></div>
       <div class="cstat">Mint date<b class="down">TBA</b></div>
     </div>
@@ -149,6 +157,18 @@
     const RUGGED = new Set();
     for (let i = 7464; i <= 7521; i++) RUGGED.add(i);
 
+    // The 20 designated 1/1 legendaries (hand-picked memetic token IDs). Rarest in the set,
+    // worth exactly as much as the rest: nothing. Each gets a gold badge + a legendary file.
+    const ONE_OF_ONE = {
+      1: "PATIENT ZERO", 69: "NICE.", 100: "THE CENTURION OF COPE", 404: "BAG NOT FOUND",
+      420: "BLAZE IT, DUMP IT", 666: "THE DEVIL'S EXIT LIQUIDITY", 777: "JACKPOT (FOR US)",
+      911: "FINANCIAL EMERGENCY", 1000: "FOUR FIGURES OF REGRET", 1337: "ELITE BAGHOLDER",
+      1971: "GOLD STANDARD, ABANDONED", 2024: "VINTAGE RUG", 4200: "HALF-BLAZED",
+      5000: "MIDLIFE CRISIS", 6969: "DOUBLE NICE.", 7000: "LUCKY NUMBER NOTHING",
+      8888: "INFINITE LOSS", 9000: "IT'S OVER 9000 (IN LOSSES)", 9999: "SO CLOSE TO NOTHING",
+      10000: "THE LAST SUPPER"
+    };
+
     // Mobile (2-col grid) shows 26 per page (clean 13 rows); desktop shows 25.
     const PER_PAGE = (window.matchMedia && window.matchMedia("(max-width: 680px)").matches) ? 26 : 25;
     const imgUrl = (n) => SRC.base + "/" + (SRC.pad ? String(n).padStart(SRC.pad, "0") : n) + ".png";
@@ -165,7 +185,11 @@
         if (RUGGED.has(n)) {
           html += `<figure class="gcard gcard--rug" data-n="${n}"><div class="gcard__rug">RUGGED<span>by the dev</span></div><figcaption>NGMI #${n}<span class="down"> · gone</span></figcaption></figure>`;
         } else {
-          html += `<figure class="gcard" data-n="${n}"><img src="${imgUrl(n)}" loading="lazy" alt="NGMI #${n}" onerror="this.closest('.gcard').classList.add('miss')" /><figcaption>NGMI #${n}<span class="down"> · not minted</span></figcaption></figure>`;
+          const one = ONE_OF_ONE[n];
+          html += `<figure class="gcard${one ? " gcard--one" : ""}" data-n="${n}">` +
+            (one ? `<span class="gcard__one">1/1</span>` : "") +
+            `<img src="${imgUrl(n)}" loading="lazy" alt="NGMI #${n}" onerror="this.closest('.gcard').classList.add('miss')" />` +
+            `<figcaption>NGMI #${n}<span class="down"> · ${one ? "1 of 1" : "not minted"}</span></figcaption></figure>`;
         }
       }
       grid.innerHTML = html;
@@ -244,6 +268,29 @@
         `<p class="lb__diag">${pick(d, DIAG_A)} ${pick(d, DIAG_B)} ${pick(d, DIAG_C)}</p>` +
         `<div class="lb__foot">Not minted. Not for sale. Not your problem - yet. <b>Mint date: TBA.</b></div>`;
     }
+    function oneFile(n) {
+      const name = ONE_OF_ONE[n];
+      const r = rngFrom(n * 3 + 5);
+      const rows = [
+        ["Token", `#${n}`],
+        ["Designation", "1 OF 1"],
+        ["Edition", "1 / 1 - the only one"],
+        ["Rarity", "0.01% (still worthless)"],
+        ["Appraised value", "$0.00, but rarer"],
+        ["Bag status", pick(r, STAT.bag)],
+        ["Current mood", pick(r, STAT.mood)],
+        ["Conviction", pick(r, STAT.conv)],
+        ["Diamond hands", pick(r, STAT.hands)],
+        ["Exit liquidity", pick(r, STAT.exit)],
+        ["Victim rating", "legendary victim"],
+      ];
+      return `<span class="lb__kick">// 1 OF 1 &middot; LEGENDARY</span>` +
+        `<h3 class="lb__title">${name}</h3>` +
+        `<p class="lb__tag">NGMI #${n} - one of one. there will never be another. lucky it.</p>` +
+        `<div class="vgrid">${rows.map(([k, v]) => `<div class="vrow"><span>${k}</span><b>${v}</b></div>`).join("")}</div>` +
+        `<p class="lb__diag">A genuine 1/1 - the rarest pre-rugged Pepe in the entire set, and still worth exactly nothing. Congratulations: you found the single most exclusive way to lose money.</p>` +
+        `<div class="lb__foot">Only <b>20</b> of these exist in 9,942. Owning one means nothing, beautifully. <b>Mint date: TBA.</b></div>`;
+    }
     function ruggedFile(n) {
       return `<span class="lb__kick">// EVIDENCE LOCKER</span>` +
         `<h3 class="lb__title">NGMI #${n}</h3>` +
@@ -267,10 +314,12 @@
     function openLightbox(n) {
       lbN = n;
       const rugged = RUGGED.has(n);
+      const one = !rugged && ONE_OF_ONE[n];
       $("#lbMedia").innerHTML = rugged
         ? `<div class="lb__rug">RUGGED<span>by the dev</span></div>`
         : `<img src="${imgUrl(n)}" alt="NGMI #${n}" onerror="this.style.display='none'" />`;
-      $("#lbInfo").innerHTML = rugged ? ruggedFile(n) : victimFile(n);
+      $("#lbInfo").innerHTML = rugged ? ruggedFile(n) : (one ? oneFile(n) : victimFile(n));
+      lb.querySelector(".lb__panel").classList.toggle("lb__panel--one", !!one);
       $("#lbInfo").scrollTop = 0;
       lb.classList.add("open"); lb.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
