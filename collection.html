@@ -22,6 +22,11 @@
     .cstat { border: 2px solid var(--ink); border-radius: 4px; background: var(--paper-2); padding: 9px 16px; font-family: var(--mono); font-size: 13px; }
     .cstat b { font-family: var(--poster); font-weight: 400; font-size: 22px; display: block; margin-top: 2px; }
     .cstat .down { color: var(--rug); }
+    .galbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 16px; }
+    .galbar__count { font-family: var(--mono); font-size: 13px; color: var(--ink-soft); }
+    .galbar__jump { display: flex; gap: 8px; }
+    .galbar__jump input { font-family: var(--mono); font-size: 13px; border: 2px solid var(--ink); border-radius: 4px; padding: 8px 11px; width: 190px; max-width: 48vw; }
+    .gcard.miss { opacity: .2; }
   </style>
 </head>
 <body>
@@ -44,50 +49,75 @@
   </header>
 
   <main class="sub">
-    <span class="sub__kick">// THE COLLECTION · PREVIEW</span>
-    <h1 class="sub__title">10,000 incoming. None minted yet.</h1>
-    <p class="sub__lead">A preview of exactly what you'll be left holding. Each one a hand-rugged Pepe,
-      freshly generated and already worthless in spirit. The full 10,000 drop on OpenSea once the
-      whitelist closes - if it ever does. <b>The mint is not live. Stop refreshing.</b></p>
+    <span class="sub__kick">// THE COLLECTION · 10,000</span>
+    <h1 class="sub__title">All 10,000. Generated, not minted.</h1>
+    <p class="sub__lead">The full collection - 10,000 hand-rugged Pepes, every one already worthless in
+      spirit. Generated, deduped, and waiting for you to become its exit liquidity.
+      <b>The mint is not live. Browse your future bag.</b></p>
 
     <div class="sub__stats">
-      <div class="cstat">Supply<b>10,000</b></div>
+      <div class="cstat">Supply<b id="cSupply">10,000</b></div>
       <div class="cstat">Minted<b>0</b></div>
       <div class="cstat">Mint price<b class="down">not free</b></div>
       <div class="cstat">Projected floor<b class="down">-99%</b></div>
     </div>
 
+    <div class="galbar">
+      <span class="galbar__count" id="galShown">loading…</span>
+      <div class="galbar__jump">
+        <input id="galJump" type="number" min="1" max="10000" inputmode="numeric" placeholder="jump to # (1-10000)" />
+        <button class="btn btn--ghost" id="galGo">Go</button>
+      </div>
+    </div>
+
     <div class="gallery" id="gallery"></div>
-    <button class="btn btn--ghost gallery__more" id="galMore" hidden>Show more +</button>
-    <p class="proof__fine">Preview samples from the 10,000. Mint is not live. These are not for sale yet. Calm down.</p>
+    <div id="galSentinel" style="height:1px"></div>
+    <p class="proof__fine">Mint is not live. These are not for sale yet. Calm down.</p>
   </main>
 
   <script>
     const $ = (s) => document.querySelector(s);
-    const GALLERY_COUNT = 24, GAL_PAGE = 6;
-    const galleryImg = (n) => `/assets/gallery/${String(n).padStart(2, "0")}.png`;
 
-    (function initGallery() {
-      const wrap = $("#gallery"); if (!wrap) return;
+    /* ===== Collection source =====================================================
+       LOCAL preview = the 24 sample renders bundled with the site.
+       To show the FULL 10,000, host images/ on your VPS and switch to the CDN line:
+         const SRC = { base: "https://cdn.engmi.fun/images", total: 10000, pad: 0 };
+       (pad 0 = files named 1.png..10000.png; pad 2 = local 01.png..24.png)            */
+    const SRC = { base: "/assets/gallery", total: 24, pad: 2 };
+    /* ============================================================================ */
+
+    const PAGE = 60;
+    const imgUrl = (n) => SRC.base + "/" + (SRC.pad ? String(n).padStart(SRC.pad, "0") : n) + ".png";
+    const grid = $("#gallery");
+    let shown = 0, obs = null;
+
+    function addPage() {
+      if (shown >= SRC.total) return;
+      const end = Math.min(SRC.total, shown + PAGE);
       let html = "";
-      for (let n = 1; n <= GALLERY_COUNT; n++) {
-        const id = String(((n * 743) % 9900) + 100).padStart(4, "0");
-        html += `<figure class="gcard"><img src="${galleryImg(n)}" loading="lazy" alt="NGMI Pepe #${id}" /><figcaption>NGMI #${id}<span class="down"> · not minted</span></figcaption></figure>`;
+      for (let n = shown + 1; n <= end; n++) {
+        html += `<figure class="gcard"><img src="${imgUrl(n)}" loading="lazy" alt="NGMI #${n}" onerror="this.closest('.gcard').classList.add('miss')" /><figcaption>NGMI #${n}<span class="down"> · not minted</span></figcaption></figure>`;
       }
-      wrap.innerHTML = html;
-      const more = $("#galMore");
-      const figs = Array.from(wrap.children);
-      const isMobile = () => window.matchMedia("(max-width: 680px)").matches;
-      let shown = isMobile() ? GAL_PAGE : figs.length;
-      function apply() {
-        if (!isMobile()) { figs.forEach(f => (f.style.display = "")); if (more) more.hidden = true; return; }
-        figs.forEach((f, i) => (f.style.display = i < shown ? "" : "none"));
-        if (more) { const left = figs.length - shown; more.hidden = left <= 0; more.textContent = left > 0 ? `Show more + (${left} left)` : ""; }
-      }
-      if (more) more.onclick = () => { shown = Math.min(figs.length, shown + GAL_PAGE); apply(); };
-      let t; window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(() => { if (!isMobile()) shown = figs.length; else if (shown >= figs.length) shown = GAL_PAGE; apply(); }, 150); });
-      apply();
-    })();
+      grid.insertAdjacentHTML("beforeend", html);
+      shown = end;
+      $("#galShown").textContent = `showing ${shown.toLocaleString()} of ${SRC.total.toLocaleString()}`;
+      if (shown >= SRC.total && obs) obs.disconnect();
+    }
+    $("#cSupply").textContent = SRC.total.toLocaleString();
+    addPage();
+    obs = new IntersectionObserver((es) => { if (es[0] && es[0].isIntersecting) addPage(); }, { rootMargin: "700px" });
+    obs.observe($("#galSentinel"));
+
+    function jump() {
+      const n = parseInt($("#galJump").value, 10);
+      if (!(n >= 1 && n <= SRC.total)) return;
+      let guard = 0;
+      while (shown < n && guard++ < 250) addPage();
+      const card = grid.children[n - 1];
+      if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    $("#galGo").onclick = jump;
+    $("#galJump").addEventListener("keydown", (e) => { if (e.key === "Enter") jump(); });
 
     (async () => {
       try {
