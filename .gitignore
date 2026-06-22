@@ -7,3 +7,5 @@ art/manifest.json
 art/manifest-rarity.json
 npm-debug.log*
 .DS_Store
+*.zip
+art/RUNPOD FINAL/

@@ -193,7 +193,7 @@ const STATUS = ["still coping", "financially deceased", "down bad", "in the tren
 let exhibitSeed = 420;
 
 /* ----------------------------- COLLECTION GALLERY (real art) ----------------------------- */
-const GALLERY_COUNT = 19;
+const GALLERY_COUNT = 24;
 const galleryImg = (n) => `/assets/gallery/${String(n).padStart(2, "0")}.png`;
 
 const GAL_PAGE = 6;   // how many to reveal per tap on mobile
