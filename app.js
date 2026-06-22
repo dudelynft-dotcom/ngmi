@@ -366,8 +366,10 @@ async function useProvider(provider, isWC) {
     ? "0x" + Number(provider.chainId || 1).toString(16)
     : await provider.request({ method: "eth_chainId" }).catch(() => "0x1");
   attachWalletListeners();
-  closeModal();
-  renderWalletBox();
+  // Re-render the burn step in place (popup on desktop, or the /apply page stage) now that we're
+  // connected. Do NOT call closeModal() here: on /apply it is wired to navigate home, which would
+  // bounce the user to the landing page the instant their wallet connects.
+  stepBurn();
   await loadNfts();
 }
 
