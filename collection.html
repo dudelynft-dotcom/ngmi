@@ -143,6 +143,10 @@
   </div>
 
   <script>
+    // Wrapped in an IIFE so our top-level vars (page, grid, $, etc.) never collide with
+    // globals injected by browser wallet extensions (which broke the page with
+    // "Identifier 'page' has already been declared").
+    (function () {
     const $ = (s) => document.querySelector(s);
 
     /* ===== Collection source =====================================================
@@ -372,6 +376,7 @@
 { var __p = location.pathname; if (__p.length > 1 && __p.slice(-1) === "/") __p = __p.slice(0,-1); nav.querySelectorAll(".nav__links a").forEach(function(a){ if (a.getAttribute("href") === __p) a.classList.add("is-active"); }); }
       tog.onclick = () => { const o = nav.classList.toggle("nav--open"); tog.setAttribute("aria-expanded", o ? "true" : "false"); };
       nav.querySelectorAll(".nav__links a").forEach(a => a.addEventListener("click", () => nav.classList.remove("nav--open")));
+    })();
     })();
   </script>
 </body>
