@@ -6,7 +6,10 @@ const path = require("path");
 const { Resvg } = require("@resvg/resvg-js");
 
 const DIR = process.argv[2] || "/tmp/grid";
-const COLS = 8, ROWS = 5, CELL = Number(process.argv[3]) || 512;   // width = COLS*CELL
+const COLS = Number(process.argv[3]) || 8;
+const ROWS = Number(process.argv[4]) || 5;
+const CELL = Number(process.argv[5]) || 512;   // width = COLS*CELL
+const OUT = process.env.OUT || "assets/x-grid.png";
 const files = fs.readdirSync(DIR).filter((f) => f.toLowerCase().endsWith(".png")).sort().slice(0, COLS * ROWS);
 
 const W = COLS * CELL, H = ROWS * CELL;
@@ -18,5 +21,5 @@ files.forEach((f, i) => {
 });
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="#0b0b0b"/>${tiles}</svg>`;
 const png = new Resvg(svg, { fitTo: { mode: "width", value: W } }).render().asPng();
-fs.writeFileSync("assets/x-grid.png", png);
-console.log(`wrote assets/x-grid.png  ${W}x${H}  (${files.length} pepes)`);
+fs.writeFileSync(OUT, png);
+console.log(`wrote ${OUT}  ${W}x${H}  (${files.length} pepes)`);
