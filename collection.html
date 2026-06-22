@@ -207,7 +207,14 @@
       const y = grid.getBoundingClientRect().top + window.scrollY - 80;
       window.scrollTo({ top: y, behavior: "smooth" });
     }
-    renderPage(1);
+    // Never leave a silent "loading…": if the first render throws, surface it instead of hanging.
+    try {
+      renderPage(1);
+    } catch (err) {
+      console.error("gallery render failed", err);
+      if (grid) grid.innerHTML = `<p style="font-family:var(--mono);font-size:13px;color:var(--rug)">Gallery hiccup: ${err && err.message ? err.message : err}. Hard-refresh the page.</p>`;
+      const gs = $("#galShown"); if (gs) gs.textContent = "render error";
+    }
 
     function jump() {
       const n = parseInt($("#galJump").value, 10);
