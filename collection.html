@@ -98,7 +98,8 @@
     const RUGGED = new Set();
     for (let i = 7464; i <= 7521; i++) RUGGED.add(i);
 
-    const PER_PAGE = 25;
+    // Mobile (2-col grid) shows 26 per page (clean 13 rows); desktop shows 25.
+    const PER_PAGE = (window.matchMedia && window.matchMedia("(max-width: 680px)").matches) ? 26 : 25;
     const imgUrl = (n) => SRC.base + "/" + (SRC.pad ? String(n).padStart(SRC.pad, "0") : n) + ".png";
     const grid = $("#gallery");
     const PAGES = Math.max(1, Math.ceil(SRC.total / PER_PAGE));
