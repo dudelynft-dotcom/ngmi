@@ -22,6 +22,8 @@
     .cstat { border: 2px solid var(--ink); border-radius: 4px; background: var(--paper-2); padding: 9px 16px; font-family: var(--mono); font-size: 13px; }
     .cstat b { font-family: var(--poster); font-weight: 400; font-size: 22px; display: block; margin-top: 2px; }
     .cstat .down { color: var(--rug); }
+    .cwatch { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 30px; font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--acid-ink); text-decoration: none; border: 2px solid var(--ink); border-radius: 4px; padding: 10px 16px; background: var(--acid); transition: background .15s, color .15s; }
+    .cwatch:hover { background: var(--ink); color: var(--acid); }
     .galbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 16px; }
     .galbar__count { font-family: var(--mono); font-size: 13px; color: var(--ink-soft); }
     .galbar__jump { display: flex; gap: 8px; }
@@ -68,7 +70,10 @@
       <div class="cstat">Rugged by dev<b class="down">58</b></div>
       <div class="cstat">Available<b>9,942</b></div>
       <div class="cstat">Mint price<b class="down">not free</b></div>
+      <div class="cstat">Mint date<b class="down">TBA</b></div>
     </div>
+
+    <a class="cwatch" href="https://x.com/engmiHQ" target="_blank" rel="noopener noreferrer">Mint date drops on X first - observe <b>@engmiHQ</b> &rarr;</a>
 
     <div class="galbar">
       <span class="galbar__count" id="galShown">loading…</span>
