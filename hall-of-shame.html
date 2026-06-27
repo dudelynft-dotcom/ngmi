@@ -19,25 +19,37 @@
     .shame__lead { color: var(--ink-soft); max-width: 660px; font-size: 15px; line-height: 1.55; margin: 0 0 22px; }
     .shame__lead b { color: var(--ink); }
 
-    .shame__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
-    .scard { position: relative; display: flex; gap: 13px; align-items: center; border: 2px solid var(--ink); border-radius: 6px; background: var(--paper-2); padding: 14px; box-shadow: 4px 4px 0 var(--ink); }
-    .scard__rank { position: absolute; top: -9px; left: -9px; background: var(--ink); color: var(--acid); font-family: var(--mono); font-weight: 700; font-size: 12px; padding: 2px 8px; border: 2px solid var(--ink); border-radius: 20px; }
-    .scard--wl { border-color: var(--acid); box-shadow: 4px 4px 0 var(--acid); }
-    .scard__wl { position: absolute; top: -9px; right: -9px; background: var(--acid); color: var(--acid-ink); font-family: var(--mono); font-weight: 700; font-size: 11px; letter-spacing: .04em; padding: 2px 9px; border: 2px solid var(--ink); border-radius: 20px; }
-    .scard--1 .scard__rank, .scard--2 .scard__rank, .scard--3 .scard__rank { background: var(--rug); color: #fff; }
-    .scard__pfp { position: relative; width: 58px; height: 58px; flex: none; border-radius: 50%; border: 2px solid var(--ink); display: grid; place-items: center; font-family: var(--poster); color: #fff; font-size: 24px; overflow: hidden; }
-    .scard__pfp img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .2s; }
-    .scard__pfp img.on { opacity: 1; }
-    .scard__main { min-width: 0; flex: 1; }
-    .scard__name { font-family: var(--font); font-weight: 900; font-size: 15px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .scard__handle { font-family: var(--mono); font-size: 12px; color: #2563eb; text-decoration: none; }
+    .shame__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(286px, 1fr)); gap: 18px; }
+    /* ---- case-file / mugshot card ---- */
+    .scard { position: relative; background: #e9e2cf; border: 2.5px solid var(--ink); border-radius: 4px; box-shadow: 6px 6px 0 var(--ink); overflow: hidden; }
+    .scard--wl { box-shadow: 6px 6px 0 var(--acid); }
+    .scard__top { display: flex; justify-content: space-between; align-items: center; background: var(--ink); color: #e9e2cf; padding: 7px 13px; font-family: var(--mono); font-weight: 700; font-size: 12px; letter-spacing: 1.5px; }
+    .scard__case { color: var(--acid); }
+    .scard--1 .scard__case, .scard--2 .scard__case, .scard--3 .scard__case { color: #ff5a3c; }
+    .scard__tag { opacity: .5; }
+    .scard__wl2 { background: var(--acid); color: var(--acid-ink); padding: 1px 8px; border-radius: 3px; font-size: 10px; letter-spacing: 1px; }
+    .scard__body { display: flex; gap: 13px; padding: 15px 14px 6px; }
+    .scard__mugwrap { flex: none; width: 90px; }
+    .scard__mug { position: relative; width: 90px; height: 90px; border: 2px solid var(--ink); overflow: hidden; background: #d9d1b8; }
+    .scard__mug .ph { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--poster); color: #fff; font-size: 34px; }
+    .scard__mug .lines { position: absolute; inset: 0; z-index: 1; background: repeating-linear-gradient(to bottom, transparent 0 15px, rgba(0,0,0,.18) 15px 16px); pointer-events: none; }
+    .scard__mug img { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .2s; }
+    .scard__mug img.on { opacity: 1; }
+    .scard__plate { font-family: var(--mono); font-weight: 700; font-size: 9px; text-align: center; background: var(--ink); color: #e9e2cf; padding: 3px 0; letter-spacing: 1.5px; border: 2px solid var(--ink); border-top: none; }
+    .scard__info { min-width: 0; flex: 1; padding-top: 1px; }
+    .scard__name { font-family: var(--font); font-weight: 900; font-size: 15px; line-height: 1.08; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); }
+    .scard__handle { font-family: var(--mono); font-size: 12px; color: #2a52c4; text-decoration: none; }
     .scard__handle:hover { text-decoration: underline; }
-    .scard__meta { display: flex; gap: 14px; margin-top: 8px; }
-    .scard__meta div { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
-    .scard__meta b { display: block; font-family: var(--poster); font-weight: 400; font-size: 19px; color: var(--ink); line-height: 1; }
-    .scard__meta .down { color: var(--rug); }
-    .scard__colls { margin-top: 9px; display: flex; gap: 5px; flex-wrap: wrap; }
-    .scard__chip { font-family: var(--mono); font-size: 10px; border: 1.5px solid var(--ink); border-radius: 20px; padding: 1px 8px; white-space: nowrap; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
+    .scard__stats { display: flex; gap: 8px; margin-top: 12px; }
+    .scard__stat { flex: 1; border: 1.5px solid var(--ink); background: #f3eedd; padding: 5px 8px; }
+    .scard__stat > span { display: block; font-family: var(--mono); font-size: 8.5px; letter-spacing: .5px; color: var(--ink-soft); text-transform: uppercase; }
+    .scard__stat b { font-family: var(--poster); font-weight: 400; font-size: 23px; line-height: 1; color: var(--rug); display: flex; align-items: center; min-height: 23px; }
+    .scard__stat.w b { color: var(--ink); }
+    .scard__stat .redact { display: inline-block; width: 46px; height: 14px; background: var(--ink); border-radius: 2px; }
+    .scard__ev { padding: 12px 14px 15px; }
+    .scard__ev-l { font-family: var(--mono); font-size: 8.5px; letter-spacing: 1px; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 6px; }
+    .scard__chips { display: flex; gap: 5px; flex-wrap: wrap; }
+    .scard__chip { font-family: var(--mono); font-size: 10px; border: 1.5px solid var(--ink); background: #fff; border-radius: 2px; padding: 1.5px 7px; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
     .shame__empty { font-family: var(--mono); color: var(--ink-soft); padding: 50px 16px; text-align: center; }
   </style>
 </head>
@@ -82,23 +94,31 @@
       // Colored initial-avatar shows instantly; the real X pfp (stored, or resolved by handle via
       // unavatar) fades in on top when/if it loads. No black loading circles, ever.
       const src = u.avatar ? big(u.avatar) : `https://unavatar.io/twitter/${encodeURIComponent(handle)}?fallback=false`;
-      const pfp = `<div class="scard__pfp" style="background:hsl(${hue(handle || initial)},48%,42%)">${initial}<img src="${esc(src)}" alt="" loading="lazy" onload="this.classList.add('on')" onerror="this.remove()" /></div>`;
-      const colls = (u.collections || []).filter(Boolean).slice(0, 4)
+      const bg = `hsl(${hue(handle || initial)},46%,42%)`;
+      // Followers are only captured for free at X login. Unknown -> a redacted bar (on brand for a case file).
+      const followers = u.followers
+        ? `<b>${num(u.followers)}</b>`
+        : `<b><span class="redact" title="not captured at login"></span></b>`;
+      const colls = (u.collections || []).filter(Boolean).slice(0, 5)
         .map(c => `<span class="scard__chip">${esc(c)}</span>`).join("");
-      const wl = u.status === "approved" ? `<span class="scard__wl" title="Whitelisted">WL</span>` : "";
+      const wl = u.status === "approved";
       return `<div class="scard scard--${rank}${wl ? " scard--wl" : ""}">
-        <span class="scard__rank">#${rank}</span>
-        ${wl}
-        ${pfp}
-        <div class="scard__main">
-          <div class="scard__name">${esc(u.name || handle)}</div>
-          <a class="scard__handle" href="https://x.com/${esc(handle)}" target="_blank" rel="noopener">@${esc(handle)}</a>
-          <div class="scard__meta">
-            <div>burned<b class="down">${u.burn_count || 0}</b></div>
-            <div>followers<b>${u.followers ? num(u.followers) : "—"}</b></div>
+        <div class="scard__top"><span class="scard__case">CASE #${rank}</span>${wl ? `<span class="scard__wl2">WHITELISTED</span>` : `<span class="scard__tag">SUSPECT</span>`}</div>
+        <div class="scard__body">
+          <div class="scard__mugwrap">
+            <div class="scard__mug"><div class="ph" style="background:${bg}">${initial}</div><div class="lines"></div><img src="${esc(src)}" alt="" loading="lazy" onload="this.classList.add('on')" onerror="this.remove()" /></div>
+            <div class="scard__plate">RUGGEE</div>
           </div>
-          ${colls ? `<div class="scard__colls">${colls}</div>` : ""}
+          <div class="scard__info">
+            <div class="scard__name">${esc(u.name || handle)}</div>
+            <a class="scard__handle" href="https://x.com/${esc(handle)}" target="_blank" rel="noopener">@${esc(handle)}</a>
+            <div class="scard__stats">
+              <div class="scard__stat"><span>bags burned</span><b>${u.burn_count || 0}</b></div>
+              <div class="scard__stat w"><span>witnesses</span>${followers}</div>
+            </div>
+          </div>
         </div>
+        ${colls ? `<div class="scard__ev"><div class="scard__ev-l">// evidence incinerated</div><div class="scard__chips">${colls}</div></div>` : ""}
       </div>`;
     }
 
